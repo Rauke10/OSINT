@@ -17,8 +17,20 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   initial documentation (`docs/architecture.md`, `sources.md`, `usage.md`,
   `legal.md`) and README.
 
+- **Phase 2 — Core + first source**: shared Pydantic v2 models
+  (`Target`, `Finding`, `Evidence`, `Confidence`, `ScanResult`, `RateLimit`,
+  `SourceStatus`), automatic target detection/normalization (offline
+  `tldextract`), `ScanContext`, async HTTP client with the **passive guard**
+  (allowlisted hosts only — provably never the target), disk TTL cache,
+  per-source async rate limiter, structlog logging with secret/PII
+  redaction, `PassiveSource` ABC + self-registering source registry, the
+  **crt.sh** source, the concurrent `Orchestrator` (dedup + pivot), the
+  JSON report writer and a working **Typer + Rich CLI**
+  (`globeye scan/sources/version`).
+
 ### Changed
 
 - Relicensed the repository from GNU GPL to **MIT**.
+- Coverage gate raised to **85 %** (current: ~95 %).
 
 [Unreleased]: https://github.com/rauke10/osint/compare/HEAD

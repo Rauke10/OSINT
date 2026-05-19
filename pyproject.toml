@@ -121,6 +121,9 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+warn_return_any = false
 
 # ----------------------------------------------------------------------------
 # pytest + coverage
@@ -141,8 +144,7 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
-# Raised to 85 in Phase 2 once real logic + tests land.
-fail_under = 0
+fail_under = 85
 exclude_lines = [
   "pragma: no cover",
   "if TYPE_CHECKING:",

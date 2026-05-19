@@ -73,7 +73,7 @@ Sources without a key are skipped gracefully; keyless sources always run.
 ## Roadmap
 
 - [x] **Phase 1** — Scaffolding (structure, tooling, CI, Docker, docs)
-- [ ] **Phase 2** — Core + crt.sh source + working CLI
+- [x] **Phase 2** — Core + crt.sh source + working CLI
 - [ ] **Phase 3** — Remaining infrastructure sources
 - [ ] **Phase 4** — Identity & code sources
 - [ ] **Phase 5** — Social sources

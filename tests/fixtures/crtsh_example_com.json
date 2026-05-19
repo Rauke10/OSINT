@@ -1,0 +1,35 @@
+[
+  {
+    "issuer_ca_id": 1,
+    "issuer_name": "C=US, O=Let's Encrypt, CN=R3",
+    "common_name": "example.com",
+    "name_value": "example.com\n*.example.com",
+    "id": 1000001,
+    "entry_timestamp": "2023-01-01T00:00:00",
+    "not_before": "2023-01-01T00:00:00",
+    "not_after": "2023-04-01T00:00:00",
+    "serial_number": "00aa"
+  },
+  {
+    "issuer_ca_id": 1,
+    "issuer_name": "C=US, O=Let's Encrypt, CN=R3",
+    "common_name": "api.example.com",
+    "name_value": "api.example.com\nwww.example.com",
+    "id": 1000002,
+    "entry_timestamp": "2023-02-01T00:00:00",
+    "not_before": "2023-02-01T00:00:00",
+    "not_after": "2023-05-01T00:00:00",
+    "serial_number": "00bb"
+  },
+  {
+    "issuer_ca_id": 2,
+    "issuer_name": "C=US, O=Example CA, CN=Example",
+    "common_name": "mail.example.com",
+    "name_value": "mail.example.com\nadmin@example.com\nother.test",
+    "id": 1000003,
+    "entry_timestamp": "2023-03-01T00:00:00",
+    "not_before": "2023-03-01T00:00:00",
+    "not_after": "2023-06-01T00:00:00",
+    "serial_number": "00cc"
+  }
+]
