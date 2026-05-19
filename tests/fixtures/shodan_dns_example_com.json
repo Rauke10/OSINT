@@ -1,0 +1,9 @@
+{
+  "domain": "example.com",
+  "data": [
+    {"subdomain": "www", "type": "A", "value": "192.0.2.10"},
+    {"subdomain": "api", "type": "CNAME", "value": "edge.example.com"},
+    {"subdomain": "", "type": "A", "value": "192.0.2.1"},
+    {"subdomain": "_dmarc", "type": "TXT", "value": "v=DMARC1"}
+  ]
+}

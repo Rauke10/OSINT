@@ -1,0 +1,8 @@
+{
+  "ip_str": "192.0.2.10",
+  "ports": [80, 443],
+  "data": [
+    {"port": 80, "transport": "tcp", "product": "nginx", "hostnames": ["www.example.com"]},
+    {"port": 443, "transport": "tcp", "product": "nginx", "hostnames": ["www.example.com"]}
+  ]
+}

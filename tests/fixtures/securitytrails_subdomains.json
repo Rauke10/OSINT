@@ -1,0 +1,5 @@
+{
+  "subdomains": ["www", "api", "mail", "vpn"],
+  "subdomain_count": 4,
+  "endpoint": "/v1/domain/example.com/subdomains"
+}

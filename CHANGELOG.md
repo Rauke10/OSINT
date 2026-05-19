@@ -28,6 +28,12 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   JSON report writer and a working **Typer + Rich CLI**
   (`globeye scan/sources/version`).
 
+- **Phase 3 — Infrastructure sources**: `rdap` (domain/IP/ASN, pivots
+  contact emails), `shodan` (host services + DNS), `censys` (host view +
+  certificate name search), `securitytrails` (subdomains), `otx`
+  (passive DNS, keyless), `wayback` (Internet Archive CDX). Each with a
+  tight host allowlist, sanitized fixtures and the no-target-traffic test.
+
 ### Changed
 
 - Relicensed the repository from GNU GPL to **MIT**.

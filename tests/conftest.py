@@ -42,3 +42,20 @@ def settings(tmp_path: Path) -> Settings:
 @pytest.fixture
 def ctx(settings: Settings) -> ScanContext:
     return ScanContext.create(settings)
+
+
+@pytest.fixture
+def ctx_factory(tmp_path: Path) -> Callable[..., ScanContext]:
+    """Build a ScanContext with extra Settings overrides (e.g. API keys)."""
+
+    def _make(**overrides: Any) -> ScanContext:
+        s = Settings(
+            _env_file=None,
+            cache_dir=str(tmp_path / "cache"),
+            cache_enabled=False,
+            http_max_retries=1,
+            **overrides,
+        )
+        return ScanContext.create(s)
+
+    return _make
