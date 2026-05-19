@@ -41,7 +41,7 @@ security: ## bandit + pip-audit + detect-secrets
 
 .PHONY: run
 run: ## Run the FastAPI server (UI + API)
-	uv run uvicorn globeye.api.main:app --host 127.0.0.1 --port 8000 --reload
+	uv run uvicorn --factory globeye.api.main:create_app --host 127.0.0.1 --port 8000 --reload
 
 .PHONY: cli
 cli: ## Run the GLOBEYE CLI (pass ARGS="...")

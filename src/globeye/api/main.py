@@ -51,4 +51,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     return app
 
 
-app = create_app()
+# NOTE: no module-level ``app = create_app()`` on purpose. Building the app
+# eagerly at import time creates the SQLite engine (and global logging) as an
+# import side effect, which races across ``pytest -n auto`` workers and
+# pollutes the working tree. Serve via the factory instead:
+#     uvicorn --factory globeye.api.main:create_app

@@ -1,0 +1,15 @@
+name: GLOBEYE CodeQL config
+
+# Analyze the shipped application code only. Tests use assertion patterns
+# like `"example.com" in values` on mocked data, which trip the
+# `py/incomplete-url-substring-sanitization` query as false positives — they
+# are not runtime URL sanitization. `src/` (the only deployed code) keeps
+# full `security-and-quality` analysis.
+paths:
+  - src
+paths-ignore:
+  - tests
+  - docs
+
+queries:
+  - uses: security-and-quality

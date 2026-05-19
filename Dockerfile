@@ -45,4 +45,4 @@ USER 10001:10001
 EXPOSE 8000
 
 ENTRYPOINT ["python", "-m", "uvicorn"]
-CMD ["globeye.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["--factory", "globeye.api.main:create_app", "--host", "0.0.0.0", "--port", "8000"]

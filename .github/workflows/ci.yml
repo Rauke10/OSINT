@@ -41,9 +41,11 @@ jobs:
       - uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
+      # Pass --python explicitly: a committed .python-version would otherwise
+      # pin uv to one interpreter and the matrix would not really test 3.13.
       - run: uv python install ${{ matrix.python-version }}
-      - run: uv sync --group dev
-      - run: uv run pytest -n auto --cov-report=xml
+      - run: uv sync --group dev --python ${{ matrix.python-version }}
+      - run: uv run --python ${{ matrix.python-version }} pytest -n auto --cov-report=xml
       - uses: actions/upload-artifact@v4
         if: always()
         with:
