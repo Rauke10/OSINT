@@ -1,15 +1,21 @@
-"""Standalone interactive HTML report (Jinja2, self-contained)."""
+"""Standalone interactive HTML report (Jinja2, self-contained).
+
+The findings dataset is embedded **once** as JSON; the table (paginated),
+the grouped timeline and the clustered relationship graph are all derived
+from it in the browser. This keeps the file small and usable even for
+scans with thousands of findings.
+"""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from globeye import __version__
 from globeye.core.models import ScanResult
-from globeye.report.graph import build_graph
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 _env = Environment(
@@ -18,9 +24,8 @@ _env = Environment(
 )
 
 
-def to_html(result: ScanResult) -> str:
-    """Render the scan result to a single self-contained HTML document."""
-    findings = [
+def _findings_payload(result: ScanResult) -> list[dict[str, Any]]:
+    return [
         {
             "source": f.source,
             "kind": f.kind,
@@ -28,20 +33,26 @@ def to_html(result: ScanResult) -> str:
             "confidence": f.confidence.value,
             "timestamp": f.timestamp.isoformat(),
             "reputation": f.normalized_data.get("reputation", "info"),
+            "node_type": (f.graph_node_hint.node_type if f.graph_node_hint else f.kind),
         }
         for f in result.findings
     ]
+
+
+def to_html(result: ScanResult) -> str:
+    """Render the scan result to a single self-contained HTML document."""
+    findings = _findings_payload(result)
     template = _env.get_template("report.html.j2")
     return template.render(
         target=result.target.model_dump(mode="json"),
         generated_at=result.finished_at.isoformat(),
+        duration=round(result.duration_seconds, 2),
         version=__version__,
         summary=result.summary(),
         sources_used=result.sources_used,
         sources_skipped=list(result.sources_skipped),
-        findings=findings,
-        findings_json=json.dumps(findings),
-        graph_json=json.dumps(build_graph(result)),
+        pivoted=[t.value for t in result.pivoted_targets],
+        findings_json=json.dumps(findings, separators=(",", ":")),
     )
 
 
