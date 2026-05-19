@@ -1,0 +1,10 @@
+{
+  "code": 200,
+  "result": {
+    "ip": "192.0.2.10",
+    "services": [
+      {"port": 80, "service_name": "HTTP", "transport_protocol": "TCP"},
+      {"port": 443, "service_name": "HTTP", "transport_protocol": "TCP"}
+    ]
+  }
+}

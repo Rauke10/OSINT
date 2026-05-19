@@ -1,0 +1,12 @@
+{
+  "entry": [
+    {
+      "hash": "0000000000000000000000000000aaaa",
+      "preferredUsername": "janedoe",
+      "displayName": "Jane Doe",
+      "accounts": [
+        {"domain": "github.com", "url": "https://github.com/janedoe"}
+      ]
+    }
+  ]
+}
