@@ -23,6 +23,43 @@ _env = Environment(
     autoescape=select_autoescape(["html", "xml", "j2"]),
 )
 
+# Human-friendly catalogue so the report explains *which* OSINT tool ran.
+_SOURCE_CATALOG: dict[str, tuple[str, str]] = {
+    "crtsh": ("crt.sh", "Certificate Transparency logs (subdomains/certs)"),
+    "rdap": ("RDAP / WHOIS", "Registration data for domains, IPs and ASNs"),
+    "shodan": ("Shodan", "Services & DNS already indexed by Shodan"),
+    "censys": ("Censys", "Host view + certificate name search"),
+    "securitytrails": ("SecurityTrails", "Passive DNS / subdomains"),
+    "otx": ("AlienVault OTX", "Passive DNS"),
+    "wayback": ("Wayback Machine", "Archived URLs (Internet Archive CDX)"),
+    "hibp": ("Have I Been Pwned", "Breach membership for an email"),
+    "hunter": ("Hunter.io", "Email pattern / known emails for a domain"),
+    "dehashed": ("DeHashed", "Breach metadata (no credential values stored)"),
+    "gravatar": ("Gravatar", "Public profile bound to an email hash"),
+    "github": ("GitHub code search", "Public code referencing the target"),
+    "pastebin": ("Pastebin (Google CSE)", "Public pastes via the Google index"),
+    "username_enum": ("Social profiles", "Public-profile presence per platform"),
+}
+
+
+def _sources_payload(result: ScanResult) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for name in sorted(result.sources_used):
+        label, desc = _SOURCE_CATALOG.get(name, (name, ""))
+        rows.append({"name": name, "label": label, "desc": desc, "status": "used", "note": ""})
+    for name in sorted(result.sources_skipped):
+        label, desc = _SOURCE_CATALOG.get(name, (name, ""))
+        rows.append(
+            {
+                "name": name,
+                "label": label,
+                "desc": desc,
+                "status": "skipped",
+                "note": result.sources_skipped[name],
+            }
+        )
+    return rows
+
 
 def _findings_payload(result: ScanResult) -> list[dict[str, Any]]:
     return [
@@ -53,6 +90,7 @@ def to_html(result: ScanResult) -> str:
         sources_skipped=list(result.sources_skipped),
         pivoted=[t.value for t in result.pivoted_targets],
         findings_json=json.dumps(findings, separators=(",", ":")),
+        sources_json=json.dumps(_sources_payload(result), separators=(",", ":")),
     )
 
 

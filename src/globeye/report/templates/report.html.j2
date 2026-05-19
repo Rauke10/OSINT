@@ -42,6 +42,10 @@
   .muted{color:var(--muted)}
   section{background:var(--panel);border:1px solid var(--line);border-radius:8px;
     padding:16px;margin-bottom:20px}
+  .st{padding:1px 9px;border-radius:999px;font-size:12px;
+    border:1px solid var(--line);white-space:nowrap}
+  .st-used{color:#0f1419;background:var(--low);border-color:var(--low)}
+  .st-skipped{color:var(--muted)}
   #graph{width:100%;height:440px;display:block}
   #graph [tabindex]{cursor:pointer}
   #node-detail{color:var(--muted);min-height:1.5em;margin:8px 0 0;
@@ -85,8 +89,8 @@
   <p><b>Target:</b> <code>{{ target.type }}</code> <b>{{ target.value }}</b>
      &nbsp;·&nbsp; generated {{ generated_at }} in {{ duration }}s
      &nbsp;·&nbsp; GLOBEYE {{ version }}</p>
-  <p class="muted">sources used: {{ sources_used|join(', ') or '—' }}
-     {% if sources_skipped %}· skipped: {{ sources_skipped|join(', ') }}{% endif %}
+  <p class="muted">{{ sources_used|length }} source(s) returned data,
+     {{ sources_skipped|length }} skipped
      {% if pivoted %}· pivoted: {{ pivoted|join(', ') }}{% endif %}</p>
 
   <div class="cards">
@@ -95,6 +99,20 @@
     <div class="card medium"><b>{{ summary.medium }}</b>medium</div>
     <div class="card low"><b>{{ summary.low }}</b>low</div>
   </div>
+
+  <section aria-label="Sources consulted">
+    <h2>Sources consulted</h2>
+    <p class="muted" style="margin-top:0">Exactly which passive OSINT tools
+      were queried for this scan, and what each returned. GLOBEYE never
+      contacts the target — only these third-party indexes.</p>
+    <table>
+      <thead><tr>
+        <th>tool</th><th>what it indexes</th><th>status</th>
+        <th>findings</th><th>note</th>
+      </tr></thead>
+      <tbody id="sources"></tbody>
+    </table>
+  </section>
 
   <section aria-label="Relationship graph">
     <h2>Relationship graph</h2>
@@ -138,9 +156,11 @@
   The author is not responsible for misuse.</footer>
 
 <script type="application/json" id="data">{{ findings_json|safe }}</script>
+<script type="application/json" id="sourcesdata">{{ sources_json|safe }}</script>
 <script>
 "use strict";
 const FINDINGS = JSON.parse(document.getElementById("data").textContent);
+const SOURCES = JSON.parse(document.getElementById("sourcesdata").textContent);
 const ROOT = {{ target.value|tojson }};
 const PAGE = 100, GRAPH_CAP = 80;
 let q = "", sortKey = "source", sortAsc = true, page = 1;
@@ -281,7 +301,24 @@ document.querySelectorAll("th[data-k]").forEach(th=>{
   th.addEventListener("keydown",e=>{if(e.key==="Enter")act();});
 });
 
-renderTable(); buildTimeline(); drawGraph();
+function buildSources(){
+  const counts={};
+  for(const f of FINDINGS) counts[f.source]=(counts[f.source]||0)+1;
+  document.getElementById("sources").innerHTML = SOURCES.map(s=>{
+    const n=counts[s.name]||0;
+    const st = s.status==="used"
+      ? '<span class="st st-used">used</span>'
+      : '<span class="st st-skipped">skipped</span>';
+    return `<tr><td><b>${esc(s.label)}</b><br>`+
+      `<span class="muted" style="font-size:12px">${esc(s.name)}</span></td>`+
+      `<td class="muted">${esc(s.desc)}</td><td>${st}</td>`+
+      `<td>${s.status==="used"?n:"—"}</td>`+
+      `<td class="muted">${esc(s.note)||"—"}</td></tr>`;
+  }).join("") ||
+    '<tr><td colspan="5" class="muted">No sources recorded.</td></tr>';
+}
+
+renderTable(); buildSources(); buildTimeline(); drawGraph();
 window.addEventListener("resize",drawGraph);
 </script>
 </body>
