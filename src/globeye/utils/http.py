@@ -99,7 +99,13 @@ async def request_json(
                     response=resp,
                 )
             resp.raise_for_status()
-            data = resp.json() if expect_json else resp.text
+            if expect_json:
+                try:
+                    data = resp.json()
+                except ValueError as exc:
+                    raise RuntimeError(f"invalid JSON from {url}: {exc}") from exc
+            else:
+                data = resp.text
             if cache is not None:
                 cache.set(cache_namespace, cache_key, data)
             return data

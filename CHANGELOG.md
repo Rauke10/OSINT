@@ -39,6 +39,10 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   credential values are deliberately discarded), `gravatar` (keyless,
   pivots username), `github` (code search), `pastebin` (via Google CSE).
 
+- **Phase 5 — Social source**: `username_enum` — one deterministic,
+  read-only GET per platform (github, gitlab, reddit, dev.to, Hacker News,
+  keybase). No brute force, no auth, no form submission.
+
 ### Changed
 
 - Relicensed the repository from GNU GPL to **MIT**.

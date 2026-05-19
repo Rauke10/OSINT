@@ -21,6 +21,7 @@ def test_expected_sources_registered():
         "gravatar",
         "github",
         "pastebin",
+        "username_enum",
     } <= names
 
 
