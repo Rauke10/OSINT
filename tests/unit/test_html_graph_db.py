@@ -75,6 +75,36 @@ def test_write_html(tmp_path: Path):
     assert "example.com" in out.read_text(encoding="utf-8")
 
 
+def test_html_report_scales_for_large_results():
+    """A 1000-finding scan must stay small and embed the data only once."""
+    t = Target(raw="big.example", type=TargetType.DOMAIN, value="big.example")
+    now = datetime(2024, 1, 1, tzinfo=UTC)
+    findings = [
+        Finding(
+            source="wayback",
+            target="big.example",
+            confidence=Confidence.LOW,
+            kind="archived_url",
+            value=f"https://big.example/path/{i}",
+        )
+        for i in range(1000)
+    ]
+    html = to_html(
+        ScanResult(
+            target=t,
+            started_at=now,
+            finished_at=now,
+            sources_used=["wayback"],
+            findings=findings,
+        )
+    )
+    # Data embedded exactly once (no server-side timeline / graph duplication).
+    assert html.count('<script type="application/json"') == 1
+    assert html.count("https://big.example/path/999") == 1
+    # Old triplicated template was ~840 KB for ~1000 findings; this stays lean.
+    assert len(html.encode()) < 300_000
+
+
 def test_db_roundtrip(tmp_path: Path):
     engine = make_engine(f"sqlite:///{tmp_path}/h.db")
     sid = save_scan(engine, _result())

@@ -8,48 +8,60 @@
   :root{--bg:#0f1419;--panel:#171c24;--fg:#e6edf3;--muted:#8b949e;--line:#272e3a;
     --accent:#4cc2ff;--high:#ff6b6b;--medium:#ffb454;--low:#56d364;
     --sensitive:#ff6b6b;--notable:#ffb454;--info:#8b949e}
-  html[data-theme="light"]{--bg:#ffffff;--panel:#f4f6f8;--fg:#1c2128;
+  html[data-theme="light"]{--bg:#fff;--panel:#f4f6f8;--fg:#1c2128;
     --muted:#57606a;--line:#d0d7de;--accent:#0969da}
   *{box-sizing:border-box}
   body{margin:0;font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif;
     background:var(--bg);color:var(--fg)}
-  header{padding:16px 24px;border-bottom:1px solid var(--line);
-    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-  h1{font-size:18px;margin:0}
-  h1 small{color:var(--muted);font-weight:400}
+  header{padding:16px 24px;border-bottom:1px solid var(--line);display:flex;
+    justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  h1{font-size:18px;margin:0}h1 small{color:var(--muted);font-weight:400}
+  h2{font-size:15px;margin:0 0 10px}
   .wrap{padding:20px 24px;max-width:1200px;margin:0 auto}
   .cards{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
-    padding:12px 16px;min-width:120px}
+    padding:12px 16px;min-width:110px}
   .card b{font-size:22px;display:block}
   .card.high b{color:var(--high)}.card.medium b{color:var(--medium)}
   .card.low b{color:var(--low)}
   button{background:var(--panel);color:var(--fg);border:1px solid var(--line);
     border-radius:6px;padding:6px 12px;cursor:pointer;font:inherit}
-  button:hover{border-color:var(--accent)}
+  button:hover:not(:disabled){border-color:var(--accent)}
+  button:disabled{opacity:.45;cursor:default}
   input[type=search]{background:var(--panel);color:var(--fg);
-    border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:280px;font:inherit}
+    border:1px solid var(--line);border-radius:6px;padding:7px 10px;
+    width:280px;max-width:60vw;font:inherit}
   table{width:100%;border-collapse:collapse;margin-top:10px}
-  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);
     vertical-align:top;word-break:break-word}
-  th{cursor:pointer;user-select:none;color:var(--muted);position:sticky;top:0;
-    background:var(--bg)}
-  th:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent)}
-  .tag{padding:1px 8px;border-radius:999px;font-size:12px;border:1px solid var(--line)}
+  th{cursor:pointer;user-select:none;color:var(--muted)}
+  th:focus-visible,button:focus-visible,a:focus-visible,svg [tabindex]:focus-visible{
+    outline:2px solid var(--accent)}
   .c-high{color:var(--high)}.c-medium{color:var(--medium)}.c-low{color:var(--low)}
   .r-sensitive{color:var(--sensitive);font-weight:600}.r-notable{color:var(--notable)}
+  .muted{color:var(--muted)}
   section{background:var(--panel);border:1px solid var(--line);border-radius:8px;
     padding:16px;margin-bottom:20px}
-  #graph{width:100%;height:460px;display:block}
-  #graph circle{cursor:pointer}
-  #node-detail{color:var(--muted);min-height:1.5em}
-  .timeline li{margin:4px 0;color:var(--muted)}
-  .timeline b{color:var(--fg)}
-  footer{color:var(--muted);padding:16px 24px;border-top:1px solid var(--line);font-size:12px}
+  #graph{width:100%;height:440px;display:block}
+  #graph [tabindex]{cursor:pointer}
+  #node-detail{color:var(--muted);min-height:1.5em;margin:8px 0 0;
+    white-space:pre-wrap;font-size:13px}
+  .pager{display:flex;gap:8px;align-items:center;margin-top:12px;
+    color:var(--muted);font-size:13px;flex-wrap:wrap}
+  .tl{list-style:none;padding:0;margin:0}
+  .tl li{display:flex;justify-content:space-between;gap:12px;
+    padding:6px 0;border-bottom:1px solid var(--line)}
+  .tl b{color:var(--fg)}.tl span{color:var(--muted);font-size:12px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);
+    font-size:12px;margin-top:8px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;
+    margin-right:5px;vertical-align:middle}
+  footer{color:var(--muted);padding:16px 24px;border-top:1px solid var(--line);
+    font-size:12px}
   .disclaimer{background:rgba(255,107,107,.12);border:1px solid var(--high);
     border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px}
   @media print{
-    header button,#controls,#node-detail{display:none}
+    header button,#controls,#node-detail,.pager{display:none}
     body{background:#fff;color:#000}
     section,.card{border:1px solid #999;break-inside:avoid}
     a{color:#000;text-decoration:underline}
@@ -71,9 +83,11 @@
   </div>
 
   <p><b>Target:</b> <code>{{ target.type }}</code> <b>{{ target.value }}</b>
-     &nbsp;·&nbsp; generated {{ generated_at }} &nbsp;·&nbsp; GLOBEYE {{ version }}</p>
-  <p style="color:var(--muted)">sources used: {{ sources_used|join(', ') or '—' }}
-     {% if sources_skipped %}· skipped: {{ sources_skipped|join(', ') }}{% endif %}</p>
+     &nbsp;·&nbsp; generated {{ generated_at }} in {{ duration }}s
+     &nbsp;·&nbsp; GLOBEYE {{ version }}</p>
+  <p class="muted">sources used: {{ sources_used|join(', ') or '—' }}
+     {% if sources_skipped %}· skipped: {{ sources_skipped|join(', ') }}{% endif %}
+     {% if pivoted %}· pivoted: {{ pivoted|join(', ') }}{% endif %}</p>
 
   <div class="cards">
     <div class="card"><b>{{ summary.total }}</b>findings</div>
@@ -83,104 +97,192 @@
   </div>
 
   <section aria-label="Relationship graph">
-    <h2 style="margin-top:0">Relationship graph</h2>
+    <h2>Relationship graph</h2>
     <svg id="graph" role="img" aria-label="Entity relationship graph"></svg>
+    <div class="legend" id="legend"></div>
     <p id="node-detail">Click a node to inspect it.</p>
   </section>
 
   <section aria-label="Findings">
-    <div id="controls" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <h2 style="margin:0">Findings</h2>
+    <div id="controls" style="display:flex;justify-content:space-between;
+         gap:12px;flex-wrap:wrap;align-items:center">
+      <h2>Findings</h2>
       <input type="search" id="filter" placeholder="Filter findings…"
-             aria-label="Filter findings" oninput="renderTable()">
+             aria-label="Filter findings">
     </div>
     <table>
       <thead><tr>
-        <th onclick="sortBy('source')" tabindex="0">source</th>
-        <th onclick="sortBy('kind')" tabindex="0">kind</th>
-        <th onclick="sortBy('value')" tabindex="0">value</th>
-        <th onclick="sortBy('confidence')" tabindex="0">conf</th>
-        <th onclick="sortBy('reputation')" tabindex="0">rep</th>
+        <th data-k="source" tabindex="0">source</th>
+        <th data-k="kind" tabindex="0">kind</th>
+        <th data-k="value" tabindex="0">value</th>
+        <th data-k="confidence" tabindex="0">conf</th>
+        <th data-k="reputation" tabindex="0">rep</th>
       </tr></thead>
       <tbody id="rows"></tbody>
     </table>
+    <div class="pager">
+      <button id="prev" aria-label="Previous page">‹ Prev</button>
+      <span id="pageinfo"></span>
+      <button id="next" aria-label="Next page">Next ›</button>
+    </div>
   </section>
 
   <section aria-label="Timeline">
-    <h2 style="margin-top:0">Discovery timeline</h2>
-    <ul class="timeline">
-      {% for f in findings|sort(attribute='timestamp') %}
-        <li><b>{{ f.timestamp }}</b> — {{ f.source }} found
-            <code>{{ f.kind }}</code> {{ f.value }}</li>
-      {% endfor %}
-    </ul>
+    <h2>Discovery timeline</h2>
+    <ul class="tl" id="tl-summary"></ul>
+    <p class="muted" style="margin:14px 0 6px">Most recent activity</p>
+    <ul class="tl" id="tl-recent"></ul>
   </section>
 </div>
 <footer>Generated by GLOBEYE {{ version }} — strictly passive OSINT.
   The author is not responsible for misuse.</footer>
 
 <script type="application/json" id="data">{{ findings_json|safe }}</script>
-<script type="application/json" id="graph">{{ graph_json|safe }}</script>
 <script>
-  const FINDINGS = JSON.parse(document.getElementById('data').textContent);
-  const GRAPH = JSON.parse(document.getElementById('graph').textContent);
-  let sortKey='source', sortAsc=true;
+"use strict";
+const FINDINGS = JSON.parse(document.getElementById("data").textContent);
+const ROOT = {{ target.value|tojson }};
+const PAGE = 100, GRAPH_CAP = 80;
+let q = "", sortKey = "source", sortAsc = true, page = 1;
 
-  function esc(s){return String(s).replace(/[&<>"]/g,
-    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+const esc = s => String(s).replace(/[&<>"]/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const COLORS = {domain:"#4cc2ff",subdomain:"#4cc2ff",email:"#ffb454",
+  username:"#56d364",url:"#a371f7",repo:"#a371f7",profile:"#56d364",
+  service:"#ff6b6b",breach:"#ff6b6b",paste:"#ff6b6b"};
+const colorFor = t => COLORS[t] || "#8b949e";
 
-  function renderTable(){
-    const q=(document.getElementById('filter').value||'').toLowerCase();
-    let rows=FINDINGS.filter(f=>JSON.stringify(f).toLowerCase().includes(q));
-    rows.sort((a,b)=>{const x=(a[sortKey]??'')+'',y=(b[sortKey]??'')+'';
-      return sortAsc?x.localeCompare(y):y.localeCompare(x);});
-    document.getElementById('rows').innerHTML=rows.map(f=>`<tr>
-      <td>${esc(f.source)}</td><td><code>${esc(f.kind)}</code></td>
-      <td>${esc(f.value)}</td>
-      <td class="c-${f.confidence}">${esc(f.confidence)}</td>
-      <td class="r-${f.reputation||'info'}">${esc(f.reputation||'info')}</td>
-    </tr>`).join('')||'<tr><td colspan="5">No matching findings.</td></tr>';
+function filtered(){
+  const s = q.toLowerCase();
+  let r = s ? FINDINGS.filter(f =>
+    (f.source+f.kind+f.value+f.confidence+f.reputation).toLowerCase().includes(s))
+    : FINDINGS.slice();
+  r.sort((a,b)=>{const x=(a[sortKey]??"")+"",y=(b[sortKey]??"")+"";
+    return sortAsc ? x.localeCompare(y) : y.localeCompare(x);});
+  return r;
+}
+
+function renderTable(){
+  const rows = filtered(), total = FINDINGS.length, m = rows.length;
+  const pages = Math.max(1, Math.ceil(m/PAGE));
+  if(page>pages) page = pages;
+  const a = (page-1)*PAGE, slice = rows.slice(a, a+PAGE);
+  document.getElementById("rows").innerHTML = slice.map(f=>`<tr>
+    <td>${esc(f.source)}</td><td><code>${esc(f.kind)}</code></td>
+    <td>${esc(f.value)}</td>
+    <td class="c-${esc(f.confidence)}">${esc(f.confidence)}</td>
+    <td class="r-${esc(f.reputation||"info")}">${esc(f.reputation||"info")}</td>
+    </tr>`).join("") ||
+    `<tr><td colspan="5" class="muted">No matching findings.</td></tr>`;
+  document.getElementById("pageinfo").textContent =
+    m ? `Showing ${a+1}–${Math.min(a+PAGE,m)} of ${m}` +
+        (m!==total ? ` (filtered from ${total})` : "") + ` · page ${page}/${pages}`
+      : `0 of ${total}`;
+  document.getElementById("prev").disabled = page<=1;
+  document.getElementById("next").disabled = page>=pages;
+}
+
+function buildTimeline(){
+  const by = {};
+  for(const f of FINDINGS){
+    const k = f.source;
+    (by[k] ||= {n:0, first:f.timestamp, last:f.timestamp});
+    by[k].n++;
+    if(f.timestamp < by[k].first) by[k].first = f.timestamp;
+    if(f.timestamp > by[k].last) by[k].last = f.timestamp;
   }
-  function sortBy(k){sortAsc=sortKey===k?!sortAsc:true;sortKey=k;renderTable();}
+  document.getElementById("tl-summary").innerHTML =
+    Object.entries(by).sort((a,b)=>b[1].n-a[1].n).map(([s,v])=>
+    `<li><b>${esc(s)}</b> <span>${v.n} findings · `+
+    `${esc(v.first.slice(0,19).replace("T"," "))} → `+
+    `${esc(v.last.slice(0,19).replace("T"," "))}</span></li>`).join("");
+  const recent = FINDINGS.slice().sort((a,b)=>
+    b.timestamp.localeCompare(a.timestamp)).slice(0,12);
+  document.getElementById("tl-recent").innerHTML = recent.map(f=>
+    `<li><span>${esc(f.timestamp.slice(0,19).replace("T"," "))}</span>`+
+    `<b>${esc(f.source)}</b> <span>${esc(f.kind)}</span> `+
+    `<span style="flex:1;text-align:right">${esc(f.value.slice(0,70))}</span></li>`
+  ).join("");
+}
 
-  function drawGraph(){
-    const svg=document.getElementById('graph');
-    const W=svg.clientWidth||900,H=460,cx=W/2,cy=H/2;
-    const ns=GRAPH.nodes,es=GRAPH.edges;
-    const pos={};
-    ns.forEach((n,i)=>{
-      if(n.data.root){pos[n.data.id]=[cx,cy];return;}
-      const a=2*Math.PI*i/Math.max(1,ns.length-1),
-        r=Math.min(W,H)/2-60;
-      pos[n.data.id]=[cx+r*Math.cos(a),cy+r*Math.sin(a)];
-    });
-    const col=t=>({domain:'#4cc2ff',email:'#ffb454',username:'#56d364',
-      url:'#a371f7',repo:'#a371f7',profile:'#56d364'}[t]||'#8b949e');
-    let s='';
-    es.forEach(e=>{const a=pos[e.data.source],b=pos[e.data.target];
-      if(a&&b)s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"
-        stroke="#39414f" stroke-width="1"/>`;});
-    ns.forEach(n=>{const p=pos[n.data.id];if(!p)return;
-      s+=`<circle cx="${p[0]}" cy="${p[1]}" r="${n.data.root?12:7}"
-        fill="${col(n.data.type)}" tabindex="0" role="button"
-        aria-label="${esc(n.data.label)}"
-        onclick="pick('${esc(n.data.id)}')" onkeydown="if(event.key==='Enter')pick('${esc(n.data.id)}')">
-        <title>${esc(n.data.label)} (${esc(n.data.type)})</title></circle>`;});
-    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
-    svg.innerHTML=s;
+function drawGraph(){
+  const svg = document.getElementById("graph");
+  const W = svg.clientWidth||900, H = 440, cx = W/2, cy = H/2;
+  // Cluster by source; expand individual nodes only when small enough.
+  const groups = {};
+  for(const f of FINDINGS){ (groups[f.source] ||= []).push(f); }
+  const names = Object.keys(groups);
+  const expand = FINDINGS.length <= GRAPH_CAP;
+  let svgEls = "", legend = "", i = 0;
+  const R = Math.min(W,H)/2 - 70, step = (2*Math.PI)/Math.max(1,names.length);
+  const detail = {};
+  for(const name of names){
+    const items = groups[name], a = i*step;
+    const gx = cx + R*Math.cos(a), gy = cy + R*Math.sin(a);
+    const col = colorFor(items[0].node_type || items[0].kind);
+    legend += `<span><i style="background:${col}"></i>${esc(name)} `+
+      `(${items.length})</span>`;
+    svgEls += `<line x1="${cx}" y1="${cy}" x2="${gx}" y2="${gy}" `+
+      `stroke="#39414f" stroke-width="1"/>`;
+    if(expand){
+      const sub = items.slice(0,18), ss = (2*Math.PI)/Math.max(1,sub.length);
+      sub.forEach((f,j)=>{
+        const r=42, nx=gx+r*Math.cos(j*ss), ny=gy+r*Math.sin(j*ss);
+        const id="n"+(i)+"_"+j; detail[id]=`${f.kind}: ${f.value}`;
+        svgEls+=`<line x1="${gx}" y1="${gy}" x2="${nx}" y2="${ny}" `+
+          `stroke="#2a313d"/><circle data-id="${id}" cx="${nx}" cy="${ny}" `+
+          `r="5" fill="${col}" tabindex="0" role="button"><title>`+
+          `${esc(f.value)}</title></circle>`;
+      });
+    }
+    const rad = expand ? 11 : Math.min(34, 9+Math.sqrt(items.length)*2.2);
+    const gid="g"+i;
+    detail[gid]=`${name} — ${items.length} findings\n`+
+      items.slice(0,12).map(f=>"• "+f.kind+": "+f.value).join("\n")+
+      (items.length>12?`\n…and ${items.length-12} more`:"");
+    svgEls += `<circle data-id="${gid}" cx="${gx}" cy="${gy}" r="${rad}" `+
+      `fill="${col}" stroke="#0f1419" stroke-width="2" tabindex="0" `+
+      `role="button"><title>${esc(name)} (${items.length})</title></circle>`+
+      `<text x="${gx}" y="${gy+rad+13}" fill="#8b949e" font-size="11" `+
+      `text-anchor="middle">${esc(name)} ${items.length}</text>`;
+    i++;
   }
-  function pick(id){const n=GRAPH.nodes.find(x=>x.data.id===id);
-    if(n)document.getElementById('node-detail').textContent=
-      `${n.data.type}: ${n.data.label}`;}
+  svgEls += `<circle cx="${cx}" cy="${cy}" r="14" fill="#e6edf3"/>`+
+    `<text x="${cx}" y="${cy-22}" fill="#e6edf3" font-size="12" `+
+    `text-anchor="middle">${esc(ROOT)}</text>`;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML = svgEls;
+  document.getElementById("legend").innerHTML = legend +
+    (expand ? "" : `<span class="muted">graph summarised by source — `+
+      `${FINDINGS.length} findings; filter the table for detail</span>`);
+  svg.onclick = svg.onkeydown = e=>{
+    if(e.type==="keydown" && e.key!=="Enter") return;
+    const el=e.target.closest("[data-id]"); if(!el) return;
+    document.getElementById("node-detail").textContent =
+      detail[el.getAttribute("data-id")] || "";
+  };
+}
 
-  function toggleTheme(){const h=document.documentElement,
-    t=h.getAttribute('data-theme')==='dark'?'light':'dark';
-    h.setAttribute('data-theme',t);try{localStorage.setItem('globeye-theme',t)}catch(e){}}
-  try{const t=localStorage.getItem('globeye-theme');
-    if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}
+function toggleTheme(){const h=document.documentElement,
+  t=h.getAttribute("data-theme")==="dark"?"light":"dark";
+  h.setAttribute("data-theme",t);
+  try{localStorage.setItem("globeye-theme",t)}catch(e){}}
+try{const t=localStorage.getItem("globeye-theme");
+  if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}
 
-  renderTable();drawGraph();
-  window.addEventListener('resize',drawGraph);
+document.getElementById("filter").addEventListener("input",e=>{
+  q=e.target.value; page=1; renderTable();});
+document.getElementById("prev").onclick=()=>{page--;renderTable();};
+document.getElementById("next").onclick=()=>{page++;renderTable();};
+document.querySelectorAll("th[data-k]").forEach(th=>{
+  const act=()=>{const k=th.dataset.k;
+    sortAsc = sortKey===k ? !sortAsc : true; sortKey=k; page=1; renderTable();};
+  th.addEventListener("click",act);
+  th.addEventListener("keydown",e=>{if(e.key==="Enter")act();});
+});
+
+renderTable(); buildTimeline(); drawGraph();
+window.addEventListener("resize",drawGraph);
 </script>
 </body>
 </html>
