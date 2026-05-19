@@ -1,0 +1,14 @@
+{
+  "balance": 100,
+  "entries": [
+    {
+      "id": "1",
+      "email": "jane.doe@example.com",
+      "username": "janed",
+      "password": "SHOULD-NOT-BE-STORED",
+      "hashed_password": "SHOULD-NOT-BE-STORED",
+      "database_name": "ExampleDB"
+    }
+  ],
+  "total": 1
+}

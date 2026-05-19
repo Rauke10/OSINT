@@ -34,6 +34,11 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   (passive DNS, keyless), `wayback` (Internet Archive CDX). Each with a
   tight host allowlist, sanitized fixtures and the no-target-traffic test.
 
+- **Phase 4 — Identity & code sources**: `hibp` (breach membership),
+  `hunter` (domain emails, pivots), `dehashed` (breach metadata only —
+  credential values are deliberately discarded), `gravatar` (keyless,
+  pivots username), `github` (code search), `pastebin` (via Google CSE).
+
 ### Changed
 
 - Relicensed the repository from GNU GPL to **MIT**.

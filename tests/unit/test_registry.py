@@ -15,6 +15,12 @@ def test_expected_sources_registered():
         "securitytrails",
         "otx",
         "wayback",
+        "hibp",
+        "hunter",
+        "dehashed",
+        "gravatar",
+        "github",
+        "pastebin",
     } <= names
 
 

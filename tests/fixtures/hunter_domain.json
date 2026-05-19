@@ -1,0 +1,11 @@
+{
+  "data": {
+    "domain": "example.com",
+    "pattern": "{first}.{last}",
+    "emails": [
+      {"value": "jane.doe@example.com", "type": "personal", "confidence": 92},
+      {"value": "info@example.com", "type": "generic", "confidence": 80}
+    ]
+  },
+  "meta": {"results": 2}
+}

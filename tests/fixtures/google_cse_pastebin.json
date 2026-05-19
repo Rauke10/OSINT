@@ -1,0 +1,15 @@
+{
+  "kind": "customsearch#search",
+  "items": [
+    {
+      "title": "leak dump - Pastebin.com",
+      "link": "https://pastebin.com/AbCd1234",
+      "snippet": "example.com credentials ..."
+    },
+    {
+      "title": "config - Pastebin.com",
+      "link": "https://pastebin.com/EfGh5678",
+      "snippet": "example.com config ..."
+    }
+  ]
+}

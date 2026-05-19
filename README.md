@@ -75,7 +75,7 @@ Sources without a key are skipped gracefully; keyless sources always run.
 - [x] **Phase 1** — Scaffolding (structure, tooling, CI, Docker, docs)
 - [x] **Phase 2** — Core + crt.sh source + working CLI
 - [x] **Phase 3** — Remaining infrastructure sources
-- [ ] **Phase 4** — Identity & code sources
+- [x] **Phase 4** — Identity & code sources
 - [ ] **Phase 5** — Social sources
 - [ ] **Phase 6** — Enrichment + pivoting
 - [ ] **Phase 7** — FastAPI API + interactive HTML report

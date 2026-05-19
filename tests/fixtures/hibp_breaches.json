@@ -1,0 +1,16 @@
+[
+  {
+    "Name": "ExampleBreach",
+    "Title": "Example Breach",
+    "BreachDate": "2019-01-01",
+    "DataClasses": ["Email addresses", "Passwords"],
+    "IsVerified": true
+  },
+  {
+    "Name": "AnotherLeak",
+    "Title": "Another Leak",
+    "BreachDate": "2021-06-15",
+    "DataClasses": ["Email addresses", "Usernames"],
+    "IsVerified": false
+  }
+]
