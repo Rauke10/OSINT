@@ -8,12 +8,16 @@ optionally — pivots into newly discovered entities.
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 from datetime import UTC, datetime
 
 from globeye.config import Settings
 from globeye.core.context import ScanContext
 from globeye.core.models import Finding, ScanResult, SourceStatus, Target
+from globeye.core.pivot import derive_pivots
 from globeye.core.target import detect
+from globeye.enrichment.geoip import GeoIPEnricher
+from globeye.enrichment.reputation import assess
 from globeye.sources.base import PassiveSource, discover_sources
 
 
@@ -102,10 +106,7 @@ class Orchestrator:
                 skipped.setdefault(name, reason)
 
             if pivot and depth < max_pivot_depth:
-                for f in findings:
-                    pt = f.pivot_target
-                    if pt is None:
-                        continue
+                for pt in derive_pivots(findings):
                     pkey = (pt.type.value, pt.value)
                     if pkey in seen:
                         continue
@@ -113,15 +114,44 @@ class Orchestrator:
                     pivoted.append(pt)
                     queue.append((pt, depth + 1))
 
+        deduped = self._dedup(all_findings)
+        self._enrich(deduped)
         return ScanResult(
             target=target,
             started_at=started,
             finished_at=datetime.now(UTC),
             sources_used=used,
             sources_skipped=skipped,
-            findings=self._dedup(all_findings),
+            findings=deduped,
             pivoted_targets=pivoted,
         )
+
+    @staticmethod
+    def _finding_ip(finding: Finding) -> str | None:
+        for candidate in (finding.target, finding.value.split(":")[0]):
+            try:
+                return str(ipaddress.ip_address(candidate))
+            except ValueError:
+                continue
+        return None
+
+    def _enrich(self, findings: list[Finding]) -> None:
+        geo = GeoIPEnricher(self.settings.geoip_city_db, self.settings.geoip_asn_db)
+        try:
+            for f in findings:
+                f.normalized_data["reputation"] = assess(f)
+                ip = self._finding_ip(f)
+                if ip is None or not geo.enabled:
+                    continue
+                geo_data: dict[str, object] = {"ip": ip}
+                if city := geo.city(ip):
+                    geo_data.update(city)
+                if asn := geo.asn(ip):
+                    geo_data["asn"] = asn
+                if len(geo_data) > 1:
+                    f.normalized_data["geo"] = geo_data
+        finally:
+            geo.close()
 
     async def health_check(self) -> list[SourceStatus]:
         """Passive health check across every registered source."""

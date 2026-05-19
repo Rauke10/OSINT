@@ -84,6 +84,13 @@ async def test_scan_with_pivot(settings):
     assert [t.value for t in result.pivoted_targets] == ["found@example.com"]
 
 
+async def test_scan_enriches_findings_with_reputation(settings):
+    orch = Orchestrator(settings)
+    orch._source_classes = [FakeSource]
+    result = await orch.scan(detect("example.com"))
+    assert all("reputation" in f.normalized_data for f in result.findings)
+
+
 async def test_health_check(settings):
     orch = Orchestrator(settings)
     orch._source_classes = [FakeSource, KeyedSource]

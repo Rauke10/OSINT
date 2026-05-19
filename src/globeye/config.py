@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "console"
 
+    # --- Enrichment (offline MaxMind GeoLite2 databases, optional) ---
+    geoip_city_db: str | None = None
+    geoip_asn_db: str | None = None
+
     # --- Persistence ---
     db_url: str = "sqlite:///./data/globeye.db"
 

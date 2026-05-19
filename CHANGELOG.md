@@ -43,6 +43,12 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   read-only GET per platform (github, gitlab, reddit, dev.to, Hacker News,
   keybase). No brute force, no auth, no form submission.
 
+- **Phase 6 — Enrichment & pivoting**: offline GeoLite2 City/ASN enricher
+  (no network; no-op without local `.mmdb`), deterministic offline
+  reputation tagging (`sensitive`/`notable`/`info`), ASN helpers, and
+  `derive_pivots` (domain → emails → usernames) wired into the
+  orchestrator.
+
 ### Changed
 
 - Relicensed the repository from GNU GPL to **MIT**.
