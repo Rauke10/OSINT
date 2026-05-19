@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a defect in GLOBEYE
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do **not** include real targets, API keys, IPs or personal data.
+        Sanitize everything before submitting.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Expected vs. actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `uv run globeye scan example.com`
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: GLOBEYE version / commit
+    validations:
+      required: true
+  - type: dropdown
+    id: python
+    attributes:
+      label: Python version
+      options: ["3.12", "3.13", "other"]
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs (redacted)
+      render: shell

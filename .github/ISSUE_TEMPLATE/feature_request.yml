@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest an enhancement or a new passive source
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What are you trying to achieve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: checkboxes
+    id: passive
+    attributes:
+      label: Passive compliance
+      description: Required for new sources.
+      options:
+        - label: This does NOT send traffic to a target (no probing/brute force/active enumeration).
+          required: true
+        - label: It only queries a third party that already indexed the data.
+          required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
