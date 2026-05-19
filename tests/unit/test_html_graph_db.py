@@ -98,11 +98,44 @@ def test_html_report_scales_for_large_results():
             findings=findings,
         )
     )
-    # Data embedded exactly once (no server-side timeline / graph duplication).
-    assert html.count('<script type="application/json"') == 1
+    # Findings embedded exactly once (no server-side timeline/graph dup).
+    assert html.count('id="data"') == 1
     assert html.count("https://big.example/path/999") == 1
     # Old triplicated template was ~840 KB for ~1000 findings; this stays lean.
     assert len(html.encode()) < 300_000
+
+
+def test_report_documents_sources_used_and_skipped():
+    """The report must make the OSINT tooling provenance explicit."""
+    t = Target(raw="example.com", type=TargetType.DOMAIN, value="example.com")
+    now = datetime(2024, 1, 1, tzinfo=UTC)
+    res = ScanResult(
+        target=t,
+        started_at=now,
+        finished_at=now,
+        sources_used=["crtsh"],
+        sources_skipped={"shodan": "missing API key", "rdap": "error: timeout"},
+        findings=[
+            Finding(
+                source="crtsh",
+                target="example.com",
+                confidence=Confidence.HIGH,
+                kind="subdomain",
+                value="api.example.com",
+            )
+        ],
+    )
+    html = to_html(res)
+    assert "Sources consulted" in html
+    # Human-friendly tool names + descriptions are present.
+    assert "crt.sh" in html
+    assert "Certificate Transparency" in html
+    assert "Have I Been Pwned" in html or "Shodan" in html
+    # Skip reasons are carried through so the report is unambiguous.
+    assert "missing API key" in html
+    assert "error: timeout" in html
+    # Provenance data embedded for client-side rendering.
+    assert 'id="sourcesdata"' in html
 
 
 def test_db_roundtrip(tmp_path: Path):
