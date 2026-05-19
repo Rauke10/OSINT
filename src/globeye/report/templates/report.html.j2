@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GLOBEYE report — {{ target.value }}</title>
+<style>
+  :root{--bg:#0f1419;--panel:#171c24;--fg:#e6edf3;--muted:#8b949e;--line:#272e3a;
+    --accent:#4cc2ff;--high:#ff6b6b;--medium:#ffb454;--low:#56d364;
+    --sensitive:#ff6b6b;--notable:#ffb454;--info:#8b949e}
+  html[data-theme="light"]{--bg:#ffffff;--panel:#f4f6f8;--fg:#1c2128;
+    --muted:#57606a;--line:#d0d7de;--accent:#0969da}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif;
+    background:var(--bg);color:var(--fg)}
+  header{padding:16px 24px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  h1{font-size:18px;margin:0}
+  h1 small{color:var(--muted);font-weight:400}
+  .wrap{padding:20px 24px;max-width:1200px;margin:0 auto}
+  .cards{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:12px 16px;min-width:120px}
+  .card b{font-size:22px;display:block}
+  .card.high b{color:var(--high)}.card.medium b{color:var(--medium)}
+  .card.low b{color:var(--low)}
+  button{background:var(--panel);color:var(--fg);border:1px solid var(--line);
+    border-radius:6px;padding:6px 12px;cursor:pointer;font:inherit}
+  button:hover{border-color:var(--accent)}
+  input[type=search]{background:var(--panel);color:var(--fg);
+    border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:280px;font:inherit}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);
+    vertical-align:top;word-break:break-word}
+  th{cursor:pointer;user-select:none;color:var(--muted);position:sticky;top:0;
+    background:var(--bg)}
+  th:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent)}
+  .tag{padding:1px 8px;border-radius:999px;font-size:12px;border:1px solid var(--line)}
+  .c-high{color:var(--high)}.c-medium{color:var(--medium)}.c-low{color:var(--low)}
+  .r-sensitive{color:var(--sensitive);font-weight:600}.r-notable{color:var(--notable)}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:16px;margin-bottom:20px}
+  #graph{width:100%;height:460px;display:block}
+  #graph circle{cursor:pointer}
+  #node-detail{color:var(--muted);min-height:1.5em}
+  .timeline li{margin:4px 0;color:var(--muted)}
+  .timeline b{color:var(--fg)}
+  footer{color:var(--muted);padding:16px 24px;border-top:1px solid var(--line);font-size:12px}
+  .disclaimer{background:rgba(255,107,107,.12);border:1px solid var(--high);
+    border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px}
+  @media print{
+    header button,#controls,#node-detail{display:none}
+    body{background:#fff;color:#000}
+    section,.card{border:1px solid #999;break-inside:avoid}
+    a{color:#000;text-decoration:underline}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>GLOBEYE <small>passive OSINT report</small></h1>
+  <div>
+    <button onclick="toggleTheme()" aria-label="Toggle colour theme">◐ Theme</button>
+    <button onclick="window.print()" aria-label="Export to PDF">⤓ PDF</button>
+  </div>
+</header>
+<div class="wrap">
+  <div class="disclaimer" role="note">
+    Authorized / educational use only. This report contains data about
+    identifiable entities — handle per GDPR and applicable law.
+  </div>
+
+  <p><b>Target:</b> <code>{{ target.type }}</code> <b>{{ target.value }}</b>
+     &nbsp;·&nbsp; generated {{ generated_at }} &nbsp;·&nbsp; GLOBEYE {{ version }}</p>
+  <p style="color:var(--muted)">sources used: {{ sources_used|join(', ') or '—' }}
+     {% if sources_skipped %}· skipped: {{ sources_skipped|join(', ') }}{% endif %}</p>
+
+  <div class="cards">
+    <div class="card"><b>{{ summary.total }}</b>findings</div>
+    <div class="card high"><b>{{ summary.high }}</b>high</div>
+    <div class="card medium"><b>{{ summary.medium }}</b>medium</div>
+    <div class="card low"><b>{{ summary.low }}</b>low</div>
+  </div>
+
+  <section aria-label="Relationship graph">
+    <h2 style="margin-top:0">Relationship graph</h2>
+    <svg id="graph" role="img" aria-label="Entity relationship graph"></svg>
+    <p id="node-detail">Click a node to inspect it.</p>
+  </section>
+
+  <section aria-label="Findings">
+    <div id="controls" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <h2 style="margin:0">Findings</h2>
+      <input type="search" id="filter" placeholder="Filter findings…"
+             aria-label="Filter findings" oninput="renderTable()">
+    </div>
+    <table>
+      <thead><tr>
+        <th onclick="sortBy('source')" tabindex="0">source</th>
+        <th onclick="sortBy('kind')" tabindex="0">kind</th>
+        <th onclick="sortBy('value')" tabindex="0">value</th>
+        <th onclick="sortBy('confidence')" tabindex="0">conf</th>
+        <th onclick="sortBy('reputation')" tabindex="0">rep</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </section>
+
+  <section aria-label="Timeline">
+    <h2 style="margin-top:0">Discovery timeline</h2>
+    <ul class="timeline">
+      {% for f in findings|sort(attribute='timestamp') %}
+        <li><b>{{ f.timestamp }}</b> — {{ f.source }} found
+            <code>{{ f.kind }}</code> {{ f.value }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+<footer>Generated by GLOBEYE {{ version }} — strictly passive OSINT.
+  The author is not responsible for misuse.</footer>
+
+<script type="application/json" id="data">{{ findings_json|safe }}</script>
+<script type="application/json" id="graph">{{ graph_json|safe }}</script>
+<script>
+  const FINDINGS = JSON.parse(document.getElementById('data').textContent);
+  const GRAPH = JSON.parse(document.getElementById('graph').textContent);
+  let sortKey='source', sortAsc=true;
+
+  function esc(s){return String(s).replace(/[&<>"]/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+  function renderTable(){
+    const q=(document.getElementById('filter').value||'').toLowerCase();
+    let rows=FINDINGS.filter(f=>JSON.stringify(f).toLowerCase().includes(q));
+    rows.sort((a,b)=>{const x=(a[sortKey]??'')+'',y=(b[sortKey]??'')+'';
+      return sortAsc?x.localeCompare(y):y.localeCompare(x);});
+    document.getElementById('rows').innerHTML=rows.map(f=>`<tr>
+      <td>${esc(f.source)}</td><td><code>${esc(f.kind)}</code></td>
+      <td>${esc(f.value)}</td>
+      <td class="c-${f.confidence}">${esc(f.confidence)}</td>
+      <td class="r-${f.reputation||'info'}">${esc(f.reputation||'info')}</td>
+    </tr>`).join('')||'<tr><td colspan="5">No matching findings.</td></tr>';
+  }
+  function sortBy(k){sortAsc=sortKey===k?!sortAsc:true;sortKey=k;renderTable();}
+
+  function drawGraph(){
+    const svg=document.getElementById('graph');
+    const W=svg.clientWidth||900,H=460,cx=W/2,cy=H/2;
+    const ns=GRAPH.nodes,es=GRAPH.edges;
+    const pos={};
+    ns.forEach((n,i)=>{
+      if(n.data.root){pos[n.data.id]=[cx,cy];return;}
+      const a=2*Math.PI*i/Math.max(1,ns.length-1),
+        r=Math.min(W,H)/2-60;
+      pos[n.data.id]=[cx+r*Math.cos(a),cy+r*Math.sin(a)];
+    });
+    const col=t=>({domain:'#4cc2ff',email:'#ffb454',username:'#56d364',
+      url:'#a371f7',repo:'#a371f7',profile:'#56d364'}[t]||'#8b949e');
+    let s='';
+    es.forEach(e=>{const a=pos[e.data.source],b=pos[e.data.target];
+      if(a&&b)s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"
+        stroke="#39414f" stroke-width="1"/>`;});
+    ns.forEach(n=>{const p=pos[n.data.id];if(!p)return;
+      s+=`<circle cx="${p[0]}" cy="${p[1]}" r="${n.data.root?12:7}"
+        fill="${col(n.data.type)}" tabindex="0" role="button"
+        aria-label="${esc(n.data.label)}"
+        onclick="pick('${esc(n.data.id)}')" onkeydown="if(event.key==='Enter')pick('${esc(n.data.id)}')">
+        <title>${esc(n.data.label)} (${esc(n.data.type)})</title></circle>`;});
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.innerHTML=s;
+  }
+  function pick(id){const n=GRAPH.nodes.find(x=>x.data.id===id);
+    if(n)document.getElementById('node-detail').textContent=
+      `${n.data.type}: ${n.data.label}`;}
+
+  function toggleTheme(){const h=document.documentElement,
+    t=h.getAttribute('data-theme')==='dark'?'light':'dark';
+    h.setAttribute('data-theme',t);try{localStorage.setItem('globeye-theme',t)}catch(e){}}
+  try{const t=localStorage.getItem('globeye-theme');
+    if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}
+
+  renderTable();drawGraph();
+  window.addEventListener('resize',drawGraph);
+</script>
+</body>
+</html>

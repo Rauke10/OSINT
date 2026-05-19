@@ -1,0 +1,30 @@
+{
+  "objectClassName": "domain",
+  "handle": "EXAMPLE-DOM",
+  "ldhName": "example.com",
+  "name": "EXAMPLE.COM",
+  "status": ["client transfer prohibited"],
+  "events": [
+    {"eventAction": "registration", "eventDate": "1995-08-14T04:00:00Z"},
+    {"eventAction": "expiration", "eventDate": "2026-08-13T04:00:00Z"}
+  ],
+  "nameservers": [
+    {"objectClassName": "nameserver", "ldhName": "a.iana-servers.net"},
+    {"objectClassName": "nameserver", "ldhName": "b.iana-servers.net"}
+  ],
+  "entities": [
+    {
+      "objectClassName": "entity",
+      "handle": "REG-1",
+      "roles": ["registrar"],
+      "vcardArray": [
+        "vcard",
+        [
+          ["version", {}, "text", "4.0"],
+          ["fn", {}, "text", "Example Registrar"],
+          ["email", {}, "text", "abuse@registrar.example"]
+        ]
+      ]
+    }
+  ]
+}

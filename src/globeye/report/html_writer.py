@@ -1,0 +1,52 @@
+"""Standalone interactive HTML report (Jinja2, self-contained)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+from globeye import __version__
+from globeye.core.models import ScanResult
+from globeye.report.graph import build_graph
+
+_TEMPLATE_DIR = Path(__file__).parent / "templates"
+_env = Environment(
+    loader=FileSystemLoader(str(_TEMPLATE_DIR)),
+    autoescape=select_autoescape(["html", "xml", "j2"]),
+)
+
+
+def to_html(result: ScanResult) -> str:
+    """Render the scan result to a single self-contained HTML document."""
+    findings = [
+        {
+            "source": f.source,
+            "kind": f.kind,
+            "value": f.value,
+            "confidence": f.confidence.value,
+            "timestamp": f.timestamp.isoformat(),
+            "reputation": f.normalized_data.get("reputation", "info"),
+        }
+        for f in result.findings
+    ]
+    template = _env.get_template("report.html.j2")
+    return template.render(
+        target=result.target.model_dump(mode="json"),
+        generated_at=result.finished_at.isoformat(),
+        version=__version__,
+        summary=result.summary(),
+        sources_used=result.sources_used,
+        sources_skipped=list(result.sources_skipped),
+        findings=findings,
+        findings_json=json.dumps(findings),
+        graph_json=json.dumps(build_graph(result)),
+    )
+
+
+def write_html(result: ScanResult, path: str | Path) -> Path:
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(to_html(result), encoding="utf-8")
+    return out

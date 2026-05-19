@@ -1,0 +1,8 @@
+{
+  "passive_dns": [
+    {"hostname": "www.example.com", "address": "192.0.2.10", "first": "2020-01-01", "last": "2023-01-01"},
+    {"hostname": "mail.example.com", "address": "192.0.2.20", "first": "2021-01-01", "last": "2023-06-01"},
+    {"hostname": "www.example.com", "address": "192.0.2.11", "first": "2019-01-01", "last": "2020-01-01"}
+  ],
+  "count": 3
+}

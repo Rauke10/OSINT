@@ -1,0 +1,16 @@
+{
+  "total_count": 2,
+  "incomplete_results": false,
+  "items": [
+    {
+      "path": "config/settings.py",
+      "html_url": "https://github.com/acme/app/blob/main/config/settings.py",
+      "repository": {"full_name": "acme/app"}
+    },
+    {
+      "path": "deploy/.env.sample",
+      "html_url": "https://github.com/acme/infra/blob/main/deploy/.env.sample",
+      "repository": {"full_name": "acme/infra"}
+    }
+  ]
+}

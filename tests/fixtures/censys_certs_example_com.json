@@ -1,0 +1,10 @@
+{
+  "code": 200,
+  "result": {
+    "query": "names: example.com",
+    "hits": [
+      {"fingerprint_sha256": "aa", "names": ["example.com", "*.example.com"]},
+      {"fingerprint_sha256": "bb", "names": ["vpn.example.com", "unrelated.test"]}
+    ]
+  }
+}
