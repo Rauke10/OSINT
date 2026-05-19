@@ -25,6 +25,12 @@
 
 ---
 
+<p align="center">
+  <img src="docs/screenshots/ui.svg" alt="GLOBEYE interactive report" width="760">
+  <br><sub>Interactive report — open a real example:
+  <a href="docs/sample-report.html"><code>docs/sample-report.html</code></a></sub>
+</p>
+
 ## Why passive?
 
 Active reconnaissance (port scans, subdomain brute force, direct DNS/HTTP
@@ -40,14 +46,15 @@ request is ever made to the target host.
 
 ```bash
 git clone https://github.com/rauke10/osint.git globeye && cd globeye
-make install                       # installs Python 3.12/3.13 + deps via uv
-uv run globeye scan example.com    # (CLI lands in Phase 2)
+make install                                    # Python 3.12/3.13 + deps (uv)
+uv run globeye scan example.com --html out.html # scan + interactive report
 ```
 
-Or run the API + web UI:
+No API keys are required for keyless sources (crt.sh, RDAP, OTX, Wayback,
+Gravatar, social). Or run the API + web UI:
 
 ```bash
-cp .env.example .env && docker compose up   # UI on http://localhost:8000
+cp .env.example .env && docker compose up       # UI on http://localhost:8000
 ```
 
 ## Supported targets
@@ -79,7 +86,9 @@ Sources without a key are skipped gracefully; keyless sources always run.
 - [x] **Phase 5** — Social sources
 - [x] **Phase 6** — Enrichment + pivoting
 - [x] **Phase 7** — FastAPI API + interactive HTML report
-- [ ] **Phase 8** — Docs polish, threat model, screenshots, `v0.1.0`
+- [x] **Phase 8** — Docs polish, threat model, sample report, `v0.1.0`
+
+Released: **v0.1.0** — see [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Development
 

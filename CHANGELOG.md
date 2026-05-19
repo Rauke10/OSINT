@@ -6,7 +6,17 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] — 2026-05-19
+
+First public release: a complete, strictly passive OSINT toolkit.
+
 ### Added
+
+- **Phase 8 — Release polish**: full threat model in `SECURITY.md`,
+  finalized `docs/` (sources/usage/architecture/legal), an illustrative
+  UI mock (`docs/screenshots/ui.svg`), a real generated example report
+  (`docs/sample-report.html`), README screenshot/quickstart, and the
+  `v0.1.0` release.
 
 - **Phase 1 — Scaffolding**: repository structure, `pyproject.toml` (uv),
   ruff / mypy(strict) / bandit / pip-audit configuration, GitHub Actions CI
@@ -63,4 +73,5 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 - Relicensed the repository from GNU GPL to **MIT**.
 - Coverage gate raised to **85 %** (current: ~95 %).
 
-[Unreleased]: https://github.com/rauke10/osint/compare/HEAD
+[Unreleased]: https://github.com/rauke10/osint/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/rauke10/osint/releases/tag/v0.1.0
