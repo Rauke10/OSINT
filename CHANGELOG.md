@@ -49,6 +49,15 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   `derive_pivots` (domain → emails → usernames) wired into the
   orchestrator.
 
+- **Phase 7 — API & interactive report**: FastAPI app (`/api/health`,
+  `/api/scan`, `/api/history`, HTML report endpoint) with simple
+  constant-time API-key auth, SQLite/SQLModel scan history, a
+  self-contained interactive HTML report (filterable/sortable table,
+  dependency-free SVG relationship graph, discovery timeline, print/PDF
+  stylesheet, dark/light, WCAG-AA), a cytoscape-compatible graph builder,
+  and an Alpine.js + Tailwind static UI. `globeye scan --html` added.
+  Integration + end-to-end tests included.
+
 ### Changed
 
 - Relicensed the repository from GNU GPL to **MIT**.

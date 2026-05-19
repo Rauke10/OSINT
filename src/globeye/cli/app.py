@@ -15,6 +15,7 @@ from globeye.config import get_settings
 from globeye.core.models import ScanResult
 from globeye.core.orchestrator import Orchestrator
 from globeye.core.target import TargetDetectionError, detect
+from globeye.report.html_writer import write_html
 from globeye.report.json_writer import write_json
 
 app = typer.Typer(
@@ -61,6 +62,9 @@ def _render(result: ScanResult) -> None:
 def scan(
     target: Annotated[str, typer.Argument(help="domain, IP, email, ...")],
     json_out: Annotated[Path | None, typer.Option("--json", "-j", help="write JSON report")] = None,
+    html_out: Annotated[
+        Path | None, typer.Option("--html", help="write interactive HTML report")
+    ] = None,
     pivot: Annotated[bool, typer.Option("--pivot", help="pivot into discovered entities")] = False,
     no_cache: Annotated[bool, typer.Option("--no-cache", help="bypass the disk cache")] = False,
     proxy: Annotated[str | None, typer.Option("--proxy", help="SOCKS5/HTTP proxy URL")] = None,
@@ -91,6 +95,9 @@ def scan(
     if json_out is not None:
         write_json(result, json_out)
         console.print(f"[green]JSON report written:[/] {json_out}")
+    if html_out is not None:
+        write_html(result, html_out)
+        console.print(f"[green]HTML report written:[/] {html_out}")
 
 
 @app.command()

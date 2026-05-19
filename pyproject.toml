@@ -137,6 +137,10 @@ markers = [
   "e2e: end-to-end scan tests (all sources mocked)",
   "integration: API/CLI integration tests",
 ]
+filterwarnings = [
+  # Known upstream (FastAPI/Starlette) deprecation — not actionable here.
+  "ignore:.*HTTP_422_UNPROCESSABLE_ENTITY.*:DeprecationWarning",
+]
 
 [tool.coverage.run]
 source = ["globeye"]

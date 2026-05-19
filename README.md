@@ -78,7 +78,7 @@ Sources without a key are skipped gracefully; keyless sources always run.
 - [x] **Phase 4** — Identity & code sources
 - [x] **Phase 5** — Social sources
 - [x] **Phase 6** — Enrichment + pivoting
-- [ ] **Phase 7** — FastAPI API + interactive HTML report
+- [x] **Phase 7** — FastAPI API + interactive HTML report
 - [ ] **Phase 8** — Docs polish, threat model, screenshots, `v0.1.0`
 
 ## Development
