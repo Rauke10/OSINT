@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Response
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from globeye import __version__
@@ -41,12 +41,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(scan.router)
     app.include_router(history.router)
 
-    if _STATIC.is_dir():
-        app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
+    # The web UI is the built React SPA (see ``frontend/``). Its assets are a
+    # build artefact emitted into ``static/`` by ``npm run build``.
+    _STATIC.mkdir(parents=True, exist_ok=True)
+    assets = _STATIC / "assets"
+    if assets.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(assets)), name="assets")
 
-        @app.get("/", include_in_schema=False)
-        async def index() -> FileResponse:
-            return FileResponse(_STATIC / "index.html")
+    @app.get("/", include_in_schema=False)
+    async def index() -> Response:
+        page = _STATIC / "index.html"
+        if page.is_file():
+            return FileResponse(page)
+        return HTMLResponse(
+            "<h1>GLOBEYE</h1><p>The web UI is not built yet. Run "
+            "<code>make install</code> (or <code>npm --prefix frontend run "
+            "build</code>), then reload.</p>",
+            status_code=503,
+        )
 
     return app
 
