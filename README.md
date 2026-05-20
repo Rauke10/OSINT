@@ -75,22 +75,25 @@ the target's infrastructure.
 - **Reports** — machine-readable JSON and a self-contained, interactive HTML
   report (filterable table, clustered relationship graph, timeline,
   print-to-PDF, dark/light, WCAG-AA) that stays lean even for 1000+ findings.
-- **CLI** (Typer + Rich) and **REST API + web UI** (FastAPI), with SQLite
-  scan history.
+- **CLI** (Typer + Rich) and a **React + TypeScript web UI** (bilingual
+  ES/EN) over a FastAPI REST API, with SQLite scan history.
 - **Production quality** — Python 3.12/3.13, Pydantic v2, `mypy --strict`,
-  Ruff, Bandit, `pip-audit`, CodeQL, ~90%+ test coverage, distroless
-  non-root Docker image.
+  Ruff, Bandit, `pip-audit`, CodeQL, ~90%+ test coverage, a typed
+  Vite-built frontend, and a distroless non-root Docker image.
 
 ## Quickstart
 
 ```bash
 git clone https://github.com/rauke10/osint.git globeye && cd globeye
-make install                                     # Python 3.12/3.13 + deps (uv)
-uv run globeye scan example.com --html out.html  # scan + interactive report
+make install                       # uv + Node deps; builds the React web UI
+uv run globeye scan example.com    # CLI scan — no extra setup
+make run                           # web UI + API → http://localhost:8000
 ```
 
-No API keys are needed for the keyless sources (crt.sh, RDAP, OTX, Wayback,
-Gravatar, social). Add only the keys you have to `.env` to unlock the rest.
+Requires **`uv`** and **Node.js 22+** (the web UI is a React app that
+`make install` builds). No API keys are needed for the keyless sources
+(crt.sh, RDAP, OTX, Wayback, Gravatar, social) — add the keys you have to
+`.env` to unlock the rest.
 
 ## Usage
 
@@ -115,18 +118,24 @@ sources: used=crtsh,rdap,otx,wayback skipped=shodan,hibp,...
 └─────────┴───────────┴──────────────────────┴─────┘
 ```
 
-**API + web UI** (requires `GLOBEYE_API_KEY` in `.env`, or
-`GLOBEYE_API_DEBUG=true` for local use):
+**Web UI + API** — the UI is a React SPA served by FastAPI. It needs
+`GLOBEYE_API_KEY` in `.env` (a secret *you choose*, not a third-party key),
+or `GLOBEYE_API_DEBUG=true` for local use.
 
 ```bash
-cp .env.example .env            # set GLOBEYE_API_KEY=...  (a secret you choose)
-docker compose up               # UI + API on http://localhost:8000
+cp .env.example .env            # set GLOBEYE_API_KEY=... or GLOBEYE_API_DEBUG=true
+
+make run                        # local: serves the built UI + API → :8000
+make ui-dev                     # dev: Vite hot-reload UI, proxies /api
+docker compose up               # container: UI + API → http://localhost:8000
+
 curl -s -X POST localhost:8000/api/scan \
   -H "X-API-Key: $GLOBEYE_API_KEY" -H 'content-type: application/json' \
   -d '{"target":"example.com","pivot":true}'
 ```
 
-Full reference: [`docs/usage.md`](docs/usage.md).
+`make run` serves the UI built by `make install`; if you skipped the build,
+run `make frontend` first. Full reference: [`docs/usage.md`](docs/usage.md).
 
 ## Architecture
 
