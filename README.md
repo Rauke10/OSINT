@@ -166,12 +166,13 @@ Disallowed active/borderline sources and the reasoning are documented in
 ```text
 src/globeye/
   core/        models · target detection · orchestrator · pivot · context
-  sources/     base (registry) · infra/ · identity/ · code/ · social/
+  sources/     base (registry) · catalog · infra/ · identity/ · code/ · social/
   enrichment/  geoip · asn · reputation   (offline, no network)
   report/      json_writer · html_writer · graph · templates/
-  api/         FastAPI app · routes · auth · static UI
+  api/         FastAPI app · routes · auth   (serves the built SPA)
   cli/         Typer + Rich app
   utils/       http (passive guard) · cache · ratelimit · redact · logging
+frontend/      React + TypeScript + Vite + Tailwind web UI (ES/EN)
 tests/         unit · integration · e2e · sanitized fixtures
 docs/          architecture · sources · usage · legal · sample report
 ```
@@ -179,10 +180,12 @@ docs/          architecture · sources · usage · legal · sample report
 ## Development
 
 ```bash
-make install   # uv + Python 3.12/3.13 + deps + pre-commit
+make install   # uv + Python 3.12/3.13 + Node deps + builds the web UI
 make lint      # ruff (lint+format) · mypy --strict · bandit
 make test      # pytest + coverage (gate ≥ 85 %)
 make audit     # pip-audit (dependency CVEs)
+make frontend  # rebuild the React web UI
+make ui-dev    # Vite dev server (hot reload, proxies /api)
 make run       # FastAPI server + web UI
 ```
 

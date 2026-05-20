@@ -7,11 +7,21 @@ help: ## Show this help
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: install
-install: ## Install Python toolchain + all deps from scratch (uv)
+install: ## Install Python + JS toolchains and build the web UI
 	uv python install $(PY_VERSIONS)
 	uv sync --frozen --group dev || uv sync --group dev
 	uv run pre-commit install
 	@test -f .secrets.baseline || uv run detect-secrets scan > .secrets.baseline
+	$(MAKE) frontend
+
+.PHONY: frontend
+frontend: ## Install deps and build the React web UI (frontend/)
+	npm --prefix frontend ci || npm --prefix frontend install
+	npm --prefix frontend run build
+
+.PHONY: ui-dev
+ui-dev: ## Run the Vite dev server (proxies /api to :8000)
+	npm --prefix frontend run dev
 
 .PHONY: lint
 lint: ## ruff (lint+format), mypy strict, bandit
