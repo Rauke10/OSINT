@@ -6,6 +6,22 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **React + TypeScript web UI** (`frontend/`, Vite + Tailwind v4): a
+  professional single-page interface — scan form, summary cards,
+  "Sources consulted" panel, interactive cytoscape relationship graph,
+  filterable/paginated findings table, scan-history browser, JSON /
+  HTML-report export, dark/light theme and an **ES/EN bilingual** toggle.
+- `GET /api/sources` and the shared `globeye.sources.catalog`.
+
+### Changed
+
+- The web UI is now the built React SPA (replacing the Alpine.js page).
+  It is a build artefact emitted into the package by `npm run build`;
+  FastAPI serves it. `make install` / the Dockerfile build it; the CI
+  gained a frontend typecheck+build job.
+
 ## [0.1.0] — 2026-05-19
 
 First public release: a complete, strictly passive OSINT toolkit.

@@ -16,12 +16,32 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from globeye import __version__
 from globeye.core.models import ScanResult
+from globeye.sources.catalog import label_for
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 _env = Environment(
     loader=FileSystemLoader(str(_TEMPLATE_DIR)),
     autoescape=select_autoescape(["html", "xml", "j2"]),
 )
+
+
+def _sources_payload(result: ScanResult) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for name in sorted(result.sources_used):
+        label, desc = label_for(name)
+        rows.append({"name": name, "label": label, "desc": desc, "status": "used", "note": ""})
+    for name in sorted(result.sources_skipped):
+        label, desc = label_for(name)
+        rows.append(
+            {
+                "name": name,
+                "label": label,
+                "desc": desc,
+                "status": "skipped",
+                "note": result.sources_skipped[name],
+            }
+        )
+    return rows
 
 
 def _findings_payload(result: ScanResult) -> list[dict[str, Any]]:
@@ -53,6 +73,7 @@ def to_html(result: ScanResult) -> str:
         sources_skipped=list(result.sources_skipped),
         pivoted=[t.value for t in result.pivoted_targets],
         findings_json=json.dumps(findings, separators=(",", ":")),
+        sources_json=json.dumps(_sources_payload(result), separators=(",", ":")),
     )
 
 

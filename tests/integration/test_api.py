@@ -53,6 +53,20 @@ async def test_health_no_auth(client):
     assert "crtsh" in body["sources"]
 
 
+async def test_sources_catalogue(client):
+    r = await client.get("/api/sources")
+    assert r.status_code == 200
+    data = r.json()
+    by_name = {s["name"]: s for s in data}
+    assert "crtsh" in by_name
+    assert by_name["crtsh"]["label"] == "crt.sh"
+    assert by_name["crtsh"]["requires_api_key"] is False
+    assert by_name["crtsh"]["available"] is True
+    # A keyed source with no key configured reports itself unavailable.
+    assert by_name["shodan"]["requires_api_key"] is True
+    assert by_name["shodan"]["available"] is False
+
+
 async def test_scan_requires_api_key(client):
     r = await client.post("/api/scan", json={"target": "example.com"})
     assert r.status_code == 401
