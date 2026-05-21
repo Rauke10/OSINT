@@ -87,7 +87,8 @@ def scan(
 
     try:
         result = asyncio.run(Orchestrator(settings).scan(tgt, pivot=pivot))
-    except Exception as exc:
+    except (RuntimeError, OSError, TimeoutError) as exc:
+        # Expected runtime failures only — KeyboardInterrupt/SystemExit propagate.
         console.print(f"[red]scan failed:[/] {exc}")
         raise typer.Exit(1) from exc
 

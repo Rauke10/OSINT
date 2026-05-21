@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     user_agent: str = "GlobeyeOSINT/0.1 (+https://github.com/rauke10/osint)"
     http_timeout_seconds: float = 20.0
     http_max_retries: int = 3
+    scan_timeout_seconds: float = 300.0
     cache_ttl_seconds: int = 86_400
     cache_dir: str = ".cache"
     cache_enabled: bool = True

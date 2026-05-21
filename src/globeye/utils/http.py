@@ -12,11 +12,29 @@ import asyncio
 from typing import Any
 
 import httpx
+from pydantic import BaseModel
 
 from globeye.config import Settings
 from globeye.utils.cache import DiskCache
 
+# A decoded JSON document. ``Any`` only appears *inside* the containers — the
+# parsed shape of an external API response is an unavoidable boundary.
+type JSONValue = dict[str, Any] | list[Any] | str | int | float | bool | None
+
 _RETRY_STATUS = {429, 500, 502, 503, 504}
+
+
+class RequestSpec(BaseModel):
+    """A single outbound HTTP request, fully typed (no positional sprawl)."""
+
+    method: str = "GET"
+    url: str
+    params: dict[str, Any] | None = None
+    headers: dict[str, str] | None = None
+    json_body: Any | None = None
+    cache_namespace: str = "http"
+    expect_json: bool = True
+
 
 # Query-string parameters that must never reach the disk cache key — some
 # APIs (Shodan, Hunter, Google CSE) only accept their key as a query param.
@@ -92,48 +110,49 @@ def _summarize(exc: Exception | None) -> str:
     return str(exc) if exc else "request failed"
 
 
-async def request_json(
+async def request(
     client: httpx.AsyncClient,
-    method: str,
-    url: str,
+    spec: RequestSpec,
     *,
     settings: Settings,
     cache: DiskCache | None = None,
-    cache_namespace: str = "http",
-    params: dict[str, Any] | None = None,
-    headers: dict[str, str] | None = None,
-    json_body: Any | None = None,
-    expect_json: bool = True,
-) -> Any:
+) -> JSONValue:
     """HTTP request with disk cache + exponential-backoff retries.
 
-    Returns parsed JSON (``expect_json=True``) or the response text.
+    Returns parsed JSON (``spec.expect_json``) or the response text.
     ``None`` is returned for 404 (treated as "no data", not an error).
     On failure raises ``RuntimeError`` with a short, human-readable reason.
     Only 429/5xx are retried; other 4xx (401/403/...) fail fast.
     """
-    cache_key = cache_key_for(method, url, params)
+    cache_key = cache_key_for(spec.method, spec.url, spec.params)
     if cache is not None:
-        hit = cache.get(cache_namespace, cache_key)
+        hit: JSONValue = cache.get(spec.cache_namespace, cache_key)
         if hit is not None:
             return hit
 
     last_exc: Exception | None = None
     for attempt in range(settings.http_max_retries + 1):
         try:
-            resp = await client.request(method, url, params=params, headers=headers, json=json_body)
+            resp = await client.request(
+                spec.method,
+                spec.url,
+                params=spec.params,
+                headers=spec.headers,
+                json=spec.json_body,
+            )
             if resp.status_code == 404:
                 return None
             resp.raise_for_status()
-            if expect_json:
+            data: JSONValue
+            if spec.expect_json:
                 try:
                     data = resp.json()
                 except ValueError as exc:
-                    raise RuntimeError(f"invalid JSON from {url}") from exc
+                    raise RuntimeError(f"invalid JSON from {spec.url}") from exc
             else:
                 data = resp.text
             if cache is not None:
-                cache.set(cache_namespace, cache_key, data)
+                cache.set(spec.cache_namespace, cache_key, data)
             return data
         except httpx.HTTPStatusError as exc:
             last_exc = exc

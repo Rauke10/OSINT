@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy.engine import Engine
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlmodel import Field, Session, SQLModel, col, create_engine, select
 
 from globeye.core.models import ScanResult
 from globeye.report.json_writer import to_dict
@@ -57,7 +57,7 @@ def save_scan(engine: Engine, result: ScanResult) -> int:
 
 def list_scans(engine: Engine, limit: int = 50) -> list[ScanRecord]:
     with Session(engine) as session:
-        stmt = select(ScanRecord).order_by(ScanRecord.id.desc()).limit(limit)  # type: ignore[union-attr]
+        stmt = select(ScanRecord).order_by(col(ScanRecord.id).desc()).limit(limit)
         return list(session.exec(stmt).all())
 
 

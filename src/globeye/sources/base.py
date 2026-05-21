@@ -22,7 +22,7 @@ from globeye.core.models import (
     Target,
     TargetType,
 )
-from globeye.utils.http import build_client, request_json
+from globeye.utils.http import JSONValue, RequestSpec, build_client, request
 from globeye.utils.ratelimit import AsyncRateLimiter
 
 SOURCE_REGISTRY: list[type[PassiveSource]] = []
@@ -96,20 +96,23 @@ class PassiveSource(ABC):
         headers: dict[str, str] | None = None,
         json_body: Any | None = None,
         expect_json: bool = True,
-    ) -> Any:
+    ) -> JSONValue:
         """Rate-limited, cached, retried request scoped to allowed hosts."""
+        spec = RequestSpec(
+            method=method,
+            url=url,
+            params=params,
+            headers=headers,
+            json_body=json_body,
+            cache_namespace=self.name,
+            expect_json=expect_json,
+        )
         async with self._limiter:
-            return await request_json(
+            return await request(
                 self.client,
-                method,
-                url,
+                spec,
                 settings=self.ctx.settings,
                 cache=self.ctx.cache,
-                cache_namespace=self.name,
-                params=params,
-                headers=headers,
-                json_body=json_body,
-                expect_json=expect_json,
             )
 
     # --- lifecycle -----------------------------------------------------------

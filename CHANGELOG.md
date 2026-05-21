@@ -21,9 +21,19 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   It is a build artefact emitted into the package by `npm run build`;
   FastAPI serves it. `make install` / the Dockerfile build it; the CI
   gained a frontend typecheck+build job.
+- **Orchestrator refactor**: the pivot walk is now a `_PivotQueue`,
+  enrichment a reusable `EnrichmentPipeline`, and a whole scan is bounded
+  by `GLOBEYE_SCAN_TIMEOUT_SECONDS` (default 300 s).
+- `request_json` is now `request(client, RequestSpec, …) -> JSONValue` —
+  a typed request object and a typed return (no `Any` in the signature).
+- Tightened exception handling: concrete GeoIP errors instead of
+  `except Exception`, a narrowed CLI scan handler, and `col()` removes the
+  last `# type: ignore` in `core/db.py`.
 
 ### Fixed
 
+- Cache keys never contain secret query parameters (`api_key`, `key`, …)
+  — see `SENSITIVE_PARAM_KEYS`.
 - Source failures now report a short, human reason (e.g.
   `HTTP 403 (blocked — the source rejected the request)`) instead of a raw
   multi-line `RuntimeError` dump.
