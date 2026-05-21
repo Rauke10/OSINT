@@ -41,10 +41,15 @@ class DiskCache:
         if not self.enabled:
             return
         path = self._path(namespace, key)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(".tmp")
-        tmp.write_text(
-            json.dumps({"_ts": time.time(), "data": data}, default=str),
-            encoding="utf-8",
-        )
-        tmp.replace(path)
+        # Caching is best-effort: a write failure (e.g. read-only filesystem)
+        # must never break a scan.
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_suffix(".tmp")
+            tmp.write_text(
+                json.dumps({"_ts": time.time(), "data": data}, default=str),
+                encoding="utf-8",
+            )
+            tmp.replace(path)
+        except OSError:
+            return

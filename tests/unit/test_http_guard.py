@@ -51,6 +51,15 @@ async def test_request_json_404_is_none(settings, respx_mock):
     await client.aclose()
 
 
+async def test_request_json_403_fails_fast_with_clean_message(settings, respx_mock):
+    route = respx_mock.get("https://crt.sh/").mock(return_value=httpx.Response(403))
+    client = build_client(settings, {"crt.sh"})
+    with pytest.raises(RuntimeError, match="HTTP 403"):
+        await request_json(client, "GET", "https://crt.sh/", settings=settings)
+    await client.aclose()
+    assert route.call_count == 1  # 403 is not retried
+
+
 async def test_request_json_uses_cache(settings, respx_mock, ctx):
     route = respx_mock.get("https://crt.sh/").mock(return_value=httpx.Response(200, json={"v": 1}))
     client = build_client(settings, {"crt.sh"})
