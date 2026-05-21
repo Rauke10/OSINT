@@ -14,6 +14,12 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   filterable/paginated findings table, scan-history browser, JSON /
   HTML-report export, dark/light theme and an **ES/EN bilingual** toggle.
 - `GET /api/sources` and the shared `globeye.sources.catalog`.
+- **Supply-chain & release CI**: Dependabot (pip/npm/docker/actions),
+  OpenSSF Scorecard, Trivy image scanning, SBOM generation (SPDX +
+  CycloneDX), a tag-triggered Release workflow (Sigstore-signed
+  wheel/sdist + multi-arch image to GHCR), `step-security/harden-runner`
+  on every job, CodeQL extended to JavaScript/TypeScript, a container
+  `HEALTHCHECK` (+ compose healthcheck) and an `.editorconfig`.
 
 ### Changed
 
