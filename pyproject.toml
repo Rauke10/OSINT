@@ -49,6 +49,7 @@ dev = [
   "pip-audit>=2.7",
   "pytest>=8.2",
   "pytest-asyncio>=0.23",
+  "pytest-benchmark>=4.0",
   "pytest-cov>=5.0",
   "pytest-xdist>=3.6",
   "respx>=0.21",
@@ -136,6 +137,7 @@ addopts = "-q --strict-markers --strict-config --cov=globeye --cov-report=term-m
 markers = [
   "e2e: end-to-end scan tests (all sources mocked)",
   "integration: API/CLI integration tests",
+  "benchmark: performance benchmarks (informational, non-gating)",
 ]
 filterwarnings = [
   # Known upstream (FastAPI/Starlette) deprecation — not actionable here.
