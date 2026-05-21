@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # Stage 0 — frontend: build the React SPA into the Python package's static/.
 # ---------------------------------------------------------------------------
-FROM node:22-bookworm-slim AS frontend
+FROM node:26-bookworm-slim AS frontend
 
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./frontend/
