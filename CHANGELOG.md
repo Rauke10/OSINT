@@ -41,6 +41,11 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   (> 500 findings) to the highest-signal nodes (confidence + reputation)
   with a "show all" control; a non-gating `build_graph` benchmark
   (`tests/unit/test_report.py`) covers 1000-finding scans.
+- **Architecture & contributor documentation**: a C4 *container*
+  diagram in `docs/architecture.md`, three Architecture Decision
+  Records under `docs/adr/` (passive-only architecture, source
+  self-registration, and the `uv` + standalone build), a
+  `CONTRIBUTORS.md`, and a demo-GIF placeholder in the README.
 
 ### Changed
 
@@ -58,6 +63,10 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   last `# type: ignore` in `core/db.py`.
 - The web UI stores the API key in `sessionStorage` by default; a
   "remember on this device" toggle opts into `localStorage`.
+- Project classifiers now declare `Development Status :: 4 - Beta` and
+  `Programming Language :: Python :: 3 :: Only`; the architecture
+  component diagram reflects the React web UI (the Alpine.js note was
+  stale).
 
 ### Fixed
 

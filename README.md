@@ -27,6 +27,11 @@
 
 ---
 
+<!--
+  Demo GIF placeholder — record a short CLI + web-UI capture, save it as
+  docs/screenshots/demo.gif, and add it above the static mock below.
+-->
+
 <p align="center">
   <img src="docs/screenshots/ui.svg" alt="GLOBEYE interactive report" width="760">
   <br><sub>Interactive standalone report — open a real example:
@@ -200,8 +205,8 @@ make ui-dev    # Vite dev server (hot reload, proxies /api)
 make run       # FastAPI server + web UI
 ```
 
-Contributions must stay passive — see [`CONTRIBUTING.md`](CONTRIBUTING.md)
-and the [Code of Conduct](CODE_OF_CONDUCT.md).
+Contributions must stay passive — see [`CONTRIBUTING.md`](CONTRIBUTING.md),
+the [Code of Conduct](CODE_OF_CONDUCT.md) and [`CONTRIBUTORS.md`](CONTRIBUTORS.md).
 
 ## Roadmap
 

@@ -4,6 +4,39 @@ GLOBEYE is a passive OSINT collector. Input → target detection → concurrent
 passive sources → dedup/pivot → persistence → reports (JSON / interactive
 HTML). Nothing ever touches the target.
 
+## Container diagram (C4)
+
+The C4 *container* view — the high-level runnable pieces and the data they
+exchange. "Container" here is the C4 sense (an independently runnable unit),
+not a Docker container.
+
+```mermaid
+C4Container
+    title Container diagram — GLOBEYE
+
+    Person(operator, "Operator", "Runs authorized, strictly passive reconnaissance")
+
+    System_Boundary(globeye, "GLOBEYE") {
+        Container(cli, "CLI", "Python, Typer + Rich", "Runs scans from a terminal; writes JSON / HTML reports")
+        Container(spa, "Web UI", "React + TypeScript, Vite", "Scan form, relationship graph, findings table, history")
+        Container(api, "API", "Python, FastAPI + Uvicorn", "Runs the passive engine; serves the SPA and the HTML report")
+        ContainerDb(history, "Scan history", "SQLite, SQLModel", "Stores past scan results")
+        ContainerDb(cache, "Response cache", "Local disk, TTL", "Caches third-party responses to respect quotas")
+    }
+
+    System_Ext(providers, "Passive OSINT providers", "crt.sh, RDAP, Shodan, OTX, HIBP, Wayback and more — never the target")
+
+    Rel(operator, cli, "Runs scans", "shell")
+    Rel(operator, spa, "Uses", "HTTPS")
+    Rel(spa, api, "Sends scan requests", "JSON / HTTPS")
+    Rel(api, spa, "Serves the built SPA", "HTTPS")
+    Rel(cli, cache, "Reads and writes")
+    Rel(api, cache, "Reads and writes")
+    Rel(api, history, "Reads and writes")
+    Rel(cli, providers, "Queries, host-allowlisted", "HTTPS")
+    Rel(api, providers, "Queries, host-allowlisted", "HTTPS")
+```
+
 ## Component diagram
 
 ```mermaid
@@ -11,7 +44,7 @@ flowchart TD
     subgraph IF["Interfaces"]
         CLI["CLI — Typer + Rich"]
         API["API — FastAPI + Uvicorn"]
-        UI["Web UI — Alpine.js + Tailwind v4"]
+        UI["Web UI — React + TypeScript"]
     end
 
     subgraph CORE["Core"]
@@ -69,6 +102,15 @@ flowchart TD
 5. **Pivot** (optional) — new entities (e.g. a discovered email) enqueue
    follow-up passive scans.
 6. **Persist & report** — store in SQLite, emit JSON + interactive HTML.
+
+## Architecture decisions
+
+Significant decisions are recorded as Architecture Decision Records in
+[`adr/`](adr/):
+
+- [0001 — Passive-only architecture](adr/0001-passive-only-architecture.md)
+- [0002 — Source registry and self-registration](adr/0002-source-registry-self-registration.md)
+- [0003 — uv and a standalone Python build](adr/0003-uv-and-python-build-standalone.md)
 
 ## Hard invariant
 
