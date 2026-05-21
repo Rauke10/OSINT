@@ -20,6 +20,10 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   wheel/sdist + multi-arch image to GHCR), `step-security/harden-runner`
   on every job, CodeQL extended to JavaScript/TypeScript, a container
   `HEALTHCHECK` (+ compose healthcheck) and an `.editorconfig`.
+- **Frontend testing baseline**: Vitest + Testing Library (29 tests,
+  ≥70 % coverage gate), ESLint (TypeScript + React + jsx-a11y), Prettier,
+  a React `ErrorBoundary` around the graph and findings table, dev-only
+  `@axe-core/react` checks, and a `frontend-test` CI job.
 
 ### Changed
 
@@ -35,6 +39,8 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 - Tightened exception handling: concrete GeoIP errors instead of
   `except Exception`, a narrowed CLI scan handler, and `col()` removes the
   last `# type: ignore` in `core/db.py`.
+- The web UI stores the API key in `sessionStorage` by default; a
+  "remember on this device" toggle opts into `localStorage`.
 
 ### Fixed
 

@@ -5,6 +5,8 @@ interface Props {
   setTarget: (v: string) => void;
   apiKey: string;
   setApiKey: (v: string) => void;
+  remember: boolean;
+  setRemember: (v: boolean) => void;
   pivot: boolean;
   setPivot: (v: boolean) => void;
   loading: boolean;
@@ -22,6 +24,8 @@ export function ScanForm({
   setTarget,
   apiKey,
   setApiKey,
+  remember,
+  setRemember,
   pivot,
   setPivot,
   loading,
@@ -59,6 +63,14 @@ export function ScanForm({
               placeholder="X-API-Key"
               className={inputCls}
             />
+          </label>
+          <label className="flex select-none items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+            />
+            {t("form_remember_key")}
           </label>
         </div>
         <div className="flex gap-3 md:flex-col md:justify-end">
