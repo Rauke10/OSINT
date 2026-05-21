@@ -2,8 +2,17 @@
 
 from __future__ import annotations
 
+from hypothesis import given
+from hypothesis import strategies as st
+
 from globeye.config import Settings
 from globeye.utils.redact import Redactor, structlog_redactor
+
+# Realistic secret shape: printable ASCII, no "*" (the mask char), >= 6 chars.
+_secret = st.text(
+    alphabet=st.characters(min_codepoint=33, max_codepoint=126, exclude_characters="*"),
+    min_size=6,
+)
 
 
 def test_redactor_masks_known_secret():
@@ -33,3 +42,16 @@ def test_structlog_processor_redacts_event():
     event = processor(None, "info", {"event": "calling", "token": "ghp_" + "z" * 36})
     assert "ghp_" not in str(event["token"])
     assert "****" in str(event["token"])
+
+
+@given(st.text(), _secret, st.text())
+def test_redactor_always_removes_a_present_secret(prefix, secret, suffix):
+    """Property: a configured secret is never left in scrubbed output."""
+    out = Redactor({secret}).scrub(prefix + secret + suffix)
+    assert secret not in out
+
+
+@given(st.text())
+def test_redactor_without_secrets_never_crashes(text):
+    """Property: pattern-only redaction handles arbitrary text safely."""
+    assert isinstance(Redactor().scrub(text), str)

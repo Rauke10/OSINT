@@ -29,6 +29,11 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   (email reputation), and a new threat-intelligence category — `urlhaus`
   and `threatfox` (abuse.ch). Each with a tight allowlist, sanitized
   fixtures and a no-target-traffic test.
+- **Property-based tests** (Hypothesis): every valid IP/email classifies
+  correctly, blank input always raises, adversarial Unicode (zero-width /
+  RTL / homoglyphs) never crashes the detector, and the redactor always
+  removes a present secret. A `pytest-benchmark` dedup benchmark
+  (`tests/perf/`, informational).
 
 ### Changed
 
