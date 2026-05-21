@@ -23,7 +23,7 @@ jobs:
       - run: uv python install 3.12
       - run: uv build
       - name: Sign artifacts (Sigstore)
-        uses: sigstore/gh-action-sigstore-python@v3.0.0
+        uses: sigstore/gh-action-sigstore-python@v3.3.0
         with:
           inputs: ./dist/*.whl ./dist/*.tar.gz
       - name: Publish GitHub Release
