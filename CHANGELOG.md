@@ -24,6 +24,11 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   ≥70 % coverage gate), ESLint (TypeScript + React + jsx-a11y), Prettier,
   a React `ErrorBoundary` around the graph and findings table, dev-only
   `@axe-core/react` checks, and a `frontend-test` CI job.
+- **Six new passive sources**: `urlscan` (existing scans), `chaos`
+  (subdomain dataset), `greynoise` (IP noise classification), `emailrep`
+  (email reputation), and a new threat-intelligence category — `urlhaus`
+  and `threatfox` (abuse.ch). Each with a tight allowlist, sanitized
+  fixtures and a no-target-traffic test.
 
 ### Changed
 

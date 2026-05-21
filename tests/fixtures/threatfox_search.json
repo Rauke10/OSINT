@@ -1,0 +1,12 @@
+{
+  "query_status": "ok",
+  "data": [
+    {
+      "ioc": "example.com",
+      "ioc_type": "domain",
+      "threat_type": "botnet_cc",
+      "malware_printable": "ExampleBot",
+      "first_seen": "2023-01-01 00:00:00 UTC"
+    }
+  ]
+}

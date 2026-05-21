@@ -1,0 +1,15 @@
+{
+  "results": [
+    {
+      "_id": "00000000-0000-0000-0000-0000000000aa",
+      "page": { "url": "https://example.com/", "domain": "example.com" },
+      "task": { "url": "https://example.com/" }
+    },
+    {
+      "_id": "00000000-0000-0000-0000-0000000000bb",
+      "page": { "url": "https://example.com/login", "domain": "example.com" },
+      "task": { "url": "https://example.com/login" }
+    }
+  ],
+  "total": 2
+}
