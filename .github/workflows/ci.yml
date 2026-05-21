@@ -18,6 +18,9 @@ jobs:
     name: Lint (ruff · mypy · bandit)
     runs-on: ubuntu-latest
     steps:
+      - uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
         with:
@@ -37,6 +40,9 @@ jobs:
       matrix:
         python-version: ["3.12", "3.13"]
     steps:
+      - uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
         with:
@@ -57,6 +63,9 @@ jobs:
     name: Dependency audit (pip-audit)
     runs-on: ubuntu-latest
     steps:
+      - uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
         with:
@@ -72,6 +81,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
+      - uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:

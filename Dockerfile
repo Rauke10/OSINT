@@ -57,5 +57,9 @@ WORKDIR /app
 USER 10001:10001
 EXPOSE 8000
 
+# Distroless has no shell — exec-form CMD running the bundled interpreter.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4).read()"]
+
 ENTRYPOINT ["python", "-m", "uvicorn"]
 CMD ["--factory", "globeye.api.main:create_app", "--host", "0.0.0.0", "--port", "8000"]
