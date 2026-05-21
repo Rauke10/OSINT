@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import { useI18n } from "../i18n";
-import type { ScanResult } from "../types";
+import type { Confidence, Finding, ScanResult } from "../types";
 
 const COLORS: Record<string, string> = {
   domain: "#38bdf8",
@@ -16,10 +16,33 @@ const COLORS: Record<string, string> = {
   breach: "#f87171",
 };
 
+/** Above this many findings the graph is capped to the highest-signal nodes. */
+const CAP = 500;
+/** How many findings to keep when the graph is capped. */
+const TOP_N = 300;
+
+const confScore: Record<Confidence, number> = { low: 1, medium: 2, high: 3 };
+const repScore: Record<string, number> = { sensitive: 3, notable: 2, info: 1 };
+
+/** Rank a finding by confidence + reputation — higher means more signal. */
+function signal(f: Finding): number {
+  const rep = String(f.normalized_data.reputation ?? "info");
+  return confScore[f.confidence] + (repScore[rep] ?? 0);
+}
+
 export function RelationshipGraph({ result }: { result: ScanResult }) {
   const { t } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
-  const [note, setNote] = useState("");
+  const [showAll, setShowAll] = useState(false);
+  const [entityCount, setEntityCount] = useState(0);
+
+  const total = result.findings.length;
+  const capped = total > CAP && !showAll;
+
+  const shown = useMemo(() => {
+    if (result.findings.length <= CAP || showAll) return result.findings;
+    return [...result.findings].sort((a, b) => signal(b) - signal(a)).slice(0, TOP_N);
+  }, [result.findings, showAll]);
 
   useEffect(() => {
     const container = ref.current;
@@ -31,7 +54,7 @@ export function RelationshipGraph({ result }: { result: ScanResult }) {
     const edges: cytoscape.ElementDefinition[] = [];
     const seen = new Set<string>();
 
-    for (const f of result.findings.slice(0, 200)) {
+    for (const f of shown) {
       const hint = f.graph_node_hint;
       const id = hint?.node_id ?? f.value;
       const type = hint?.node_type ?? f.kind;
@@ -52,11 +75,7 @@ export function RelationshipGraph({ result }: { result: ScanResult }) {
       }
     }
 
-    setNote(
-      result.findings.length > 200
-        ? t("graph_truncated")
-        : `${nodes.size - 1} ${t("graph_entities")}`,
-    );
+    setEntityCount(nodes.size - 1);
 
     const cy = cytoscape({
       container,
@@ -88,7 +107,7 @@ export function RelationshipGraph({ result }: { result: ScanResult }) {
       layout: { name: "cose", animate: false },
     });
     return () => cy.destroy();
-  }, [result, t]);
+  }, [result.target.value, shown]);
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
@@ -97,7 +116,23 @@ export function RelationshipGraph({ result }: { result: ScanResult }) {
         ref={ref}
         className="h-[420px] rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
       />
-      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{note}</p>
+      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        {capped ? (
+          <>
+            {t("graph_capped")}
+            {" · "}
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="text-sky-500 underline hover:no-underline"
+            >
+              {t("graph_show_all")} ({total})
+            </button>
+          </>
+        ) : (
+          `${entityCount} ${t("graph_entities")}`
+        )}
+      </p>
     </section>
   );
 }

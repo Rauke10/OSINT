@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 
+import pytest
+
 from globeye.core.models import (
     Confidence,
     Finding,
@@ -13,6 +15,7 @@ from globeye.core.models import (
     Target,
     TargetType,
 )
+from globeye.report.graph import build_graph
 from globeye.report.json_writer import to_json, write_json
 
 
@@ -70,3 +73,30 @@ def test_json_writer(tmp_path):
     out = write_json(r, tmp_path / "sub" / "report.json")
     assert out.exists()
     assert json.loads(out.read_text())["findings"][0]["source"] == "crtsh"
+
+
+@pytest.mark.benchmark
+def test_graph_perf_1000_findings(benchmark):
+    """Informational: build_graph over 1000 findings stays well under 100 ms."""
+    target = Target(raw="example.com", type=TargetType.DOMAIN, value="example.com")
+    now = datetime(2024, 1, 1, tzinfo=UTC)
+    findings = [
+        Finding(
+            source="crtsh",
+            target="example.com",
+            confidence=Confidence.LOW,
+            kind="subdomain",
+            value=f"host{i}.example.com",
+        )
+        for i in range(1000)
+    ]
+    result = ScanResult(
+        target=target,
+        started_at=now,
+        finished_at=now,
+        sources_used=["crtsh"],
+        findings=findings,
+    )
+    graph = benchmark(build_graph, result)
+    assert len(graph["nodes"]) == 1001
+    assert len(graph["edges"]) == 1000
