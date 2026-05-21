@@ -38,6 +38,15 @@ def test_cache_corrupt_file_is_ignored(tmp_path):
     assert c.get("ns", "k") is None
 
 
+def test_cache_set_is_best_effort_on_unwritable_path(tmp_path):
+    # Cache dir under a regular file -> mkdir fails; set() must not raise.
+    blocker = tmp_path / "blocker"
+    blocker.write_text("x", encoding="utf-8")
+    c = DiskCache(blocker / "cache", ttl_seconds=60)
+    c.set("ns", "k", {"a": 1})  # must be silent, not raise
+    assert c.get("ns", "k") is None
+
+
 async def test_rate_limiter_spaces_requests():
     limiter = AsyncRateLimiter(RateLimit(rate=1, per=0.05, concurrency=1))
     start = asyncio.get_running_loop().time()

@@ -62,6 +62,22 @@ def build_client(
     )
 
 
+def _summarize(exc: Exception | None) -> str:
+    """Turn a low-level HTTP exception into a short, human reason."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        code = exc.response.status_code
+        if code in (401, 403):
+            return f"HTTP {code} (blocked — the source rejected the request)"
+        if code == 429:
+            return "HTTP 429 (rate-limited by the source)"
+        return f"HTTP {code}"
+    if isinstance(exc, httpx.TimeoutException):
+        return "timeout (source did not respond)"
+    if isinstance(exc, httpx.TransportError):
+        return "network error (source unreachable)"
+    return str(exc) if exc else "request failed"
+
+
 async def request_json(
     client: httpx.AsyncClient,
     method: str,
@@ -79,6 +95,8 @@ async def request_json(
 
     Returns parsed JSON (``expect_json=True``) or the response text.
     ``None`` is returned for 404 (treated as "no data", not an error).
+    On failure raises ``RuntimeError`` with a short, human-readable reason.
+    Only 429/5xx are retried; other 4xx (401/403/...) fail fast.
     """
     cache_key = f"{method}:{url}:{sorted((params or {}).items())}"
     if cache is not None:
@@ -92,27 +110,27 @@ async def request_json(
             resp = await client.request(method, url, params=params, headers=headers, json=json_body)
             if resp.status_code == 404:
                 return None
-            if resp.status_code in _RETRY_STATUS:
-                raise httpx.HTTPStatusError(
-                    f"retryable status {resp.status_code}",
-                    request=resp.request,
-                    response=resp,
-                )
             resp.raise_for_status()
             if expect_json:
                 try:
                     data = resp.json()
                 except ValueError as exc:
-                    raise RuntimeError(f"invalid JSON from {url}: {exc}") from exc
+                    raise RuntimeError(f"invalid JSON from {url}") from exc
             else:
                 data = resp.text
             if cache is not None:
                 cache.set(cache_namespace, cache_key, data)
             return data
-        except (httpx.TransportError, httpx.HTTPStatusError) as exc:
+        except httpx.HTTPStatusError as exc:
+            last_exc = exc
+            retryable = exc.response.status_code in _RETRY_STATUS
+            if not retryable or attempt >= settings.http_max_retries:
+                break
+            await asyncio.sleep(2.0**attempt)
+        except httpx.TransportError as exc:
             last_exc = exc
             if attempt >= settings.http_max_retries:
                 break
             await asyncio.sleep(2.0**attempt)
 
-    raise RuntimeError(f"request to {url} failed after retries: {last_exc}")
+    raise RuntimeError(_summarize(last_exc)) from last_exc

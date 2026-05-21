@@ -58,7 +58,7 @@ class Orchestrator:
         findings: list[Finding] = []
         for src, res in zip(runnable, results, strict=True):
             if isinstance(res, BaseException):
-                skipped[src.name] = f"error: {type(res).__name__}: {res}"
+                skipped[src.name] = str(res) or type(res).__name__
                 continue
             used.append(src.name)
             findings.extend(res)

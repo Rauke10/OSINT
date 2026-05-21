@@ -22,6 +22,20 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   FastAPI serves it. `make install` / the Dockerfile build it; the CI
   gained a frontend typecheck+build job.
 
+### Fixed
+
+- Source failures now report a short, human reason (e.g.
+  `HTTP 403 (blocked — the source rejected the request)`) instead of a raw
+  multi-line `RuntimeError` dump.
+- `4xx` responses other than 429 (e.g. 403) fail fast instead of being
+  retried with back-off — a blocked scan now finishes in ~0.2 s, not ~8 s.
+- The disk cache is now strictly best-effort: a write failure (e.g.
+  read-only filesystem) no longer aborts the source.
+- `.env.example` no longer ships relative `GLOBEYE_DB_URL` /
+  `GLOBEYE_CACHE_DIR` values that broke the read-only Docker container;
+  they default to the writable `/data` paths. Clarified that
+  `GLOBEYE_API_KEY` is a secret you generate yourself.
+
 ## [0.1.0] — 2026-05-19
 
 First public release: a complete, strictly passive OSINT toolkit.
