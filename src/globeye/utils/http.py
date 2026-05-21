@@ -18,6 +18,20 @@ from globeye.utils.cache import DiskCache
 
 _RETRY_STATUS = {429, 500, 502, 503, 504}
 
+# Query-string parameters that must never reach the disk cache key — some
+# APIs (Shodan, Hunter, Google CSE) only accept their key as a query param.
+SENSITIVE_PARAM_KEYS = frozenset(
+    {"api_key", "apikey", "key", "token", "access_token", "auth", "secret"}
+)
+
+
+def cache_key_for(method: str, url: str, params: dict[str, Any] | None) -> str:
+    """Build a disk-cache key with secret query parameters stripped out."""
+    safe = sorted(
+        (k, v) for k, v in (params or {}).items() if k.lower() not in SENSITIVE_PARAM_KEYS
+    )
+    return f"{method}:{url}:{safe}"
+
 
 class DisallowedHostError(RuntimeError):
     """Raised when code tries to reach a host outside the allowlist."""
@@ -98,7 +112,7 @@ async def request_json(
     On failure raises ``RuntimeError`` with a short, human-readable reason.
     Only 429/5xx are retried; other 4xx (401/403/...) fail fast.
     """
-    cache_key = f"{method}:{url}:{sorted((params or {}).items())}"
+    cache_key = cache_key_for(method, url, params)
     if cache is not None:
         hit = cache.get(cache_namespace, cache_key)
         if hit is not None:
