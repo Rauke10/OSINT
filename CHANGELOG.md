@@ -34,6 +34,13 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
   RTL / homoglyphs) never crashes the detector, and the redactor always
   removes a present secret. A `pytest-benchmark` dedup benchmark
   (`tests/perf/`, informational).
+- **Findings grouping & graph scaling**: a "group by value" view —
+  collapsing findings that share a value while keeping every source —
+  toggleable in both the web UI findings table and the self-contained
+  HTML report. The relationship graph now caps very large scans
+  (> 500 findings) to the highest-signal nodes (confidence + reputation)
+  with a "show all" control; a non-gating `build_graph` benchmark
+  (`tests/unit/test_report.py`) covers 1000-finding scans.
 
 ### Changed
 

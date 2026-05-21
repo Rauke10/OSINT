@@ -35,6 +35,9 @@
   th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);
     vertical-align:top;word-break:break-word}
   th{cursor:pointer;user-select:none;color:var(--muted)}
+  #head-grouped th{cursor:default}
+  #controls label{color:var(--muted);font-size:13px;cursor:pointer;
+    user-select:none;display:flex;gap:6px;align-items:center}
   th:focus-visible,button:focus-visible,a:focus-visible,svg [tabindex]:focus-visible{
     outline:2px solid var(--accent)}
   .c-high{color:var(--high)}.c-medium{color:var(--medium)}.c-low{color:var(--low)}
@@ -125,17 +128,25 @@
     <div id="controls" style="display:flex;justify-content:space-between;
          gap:12px;flex-wrap:wrap;align-items:center">
       <h2>Findings</h2>
-      <input type="search" id="filter" placeholder="Filter findings…"
-             aria-label="Filter findings">
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <label><input type="checkbox" id="grouped"> Group by value</label>
+        <input type="search" id="filter" placeholder="Filter findings…"
+               aria-label="Filter findings">
+      </div>
     </div>
     <table>
-      <thead><tr>
-        <th data-k="source" tabindex="0">source</th>
-        <th data-k="kind" tabindex="0">kind</th>
-        <th data-k="value" tabindex="0">value</th>
-        <th data-k="confidence" tabindex="0">conf</th>
-        <th data-k="reputation" tabindex="0">rep</th>
-      </tr></thead>
+      <thead>
+        <tr id="head-flat">
+          <th data-k="source" tabindex="0">source</th>
+          <th data-k="kind" tabindex="0">kind</th>
+          <th data-k="value" tabindex="0">value</th>
+          <th data-k="confidence" tabindex="0">conf</th>
+          <th data-k="reputation" tabindex="0">rep</th>
+        </tr>
+        <tr id="head-grouped" hidden>
+          <th>value</th><th>kind</th><th>sources</th><th>conf</th>
+        </tr>
+      </thead>
       <tbody id="rows"></tbody>
     </table>
     <div class="pager">
@@ -163,7 +174,8 @@ const FINDINGS = JSON.parse(document.getElementById("data").textContent);
 const SOURCES = JSON.parse(document.getElementById("sourcesdata").textContent);
 const ROOT = {{ target.value|tojson }};
 const PAGE = 100, GRAPH_CAP = 80;
-let q = "", sortKey = "source", sortAsc = true, page = 1;
+let q = "", sortKey = "source", sortAsc = true, page = 1, grouped = false;
+const CONF_RANK = {low:1, medium:2, high:3};
 
 const esc = s => String(s).replace(/[&<>"]/g,
   c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -182,22 +194,51 @@ function filtered(){
   return r;
 }
 
+function groupByValue(list){
+  const m = new Map();
+  for(const f of list){
+    const g = m.get(f.value);
+    if(!g){
+      m.set(f.value, {value:f.value, kind:f.kind,
+        sources:[f.source], confidence:f.confidence});
+    } else {
+      if(!g.sources.includes(f.source)) g.sources.push(f.source);
+      if(CONF_RANK[f.confidence] > CONF_RANK[g.confidence])
+        g.confidence = f.confidence;
+    }
+  }
+  return [...m.values()];
+}
+
 function renderTable(){
-  const rows = filtered(), total = FINDINGS.length, m = rows.length;
+  document.getElementById("head-flat").hidden = grouped;
+  document.getElementById("head-grouped").hidden = !grouped;
+  const base = filtered(), total = FINDINGS.length;
+  const items = grouped ? groupByValue(base) : base;
+  const m = items.length, cols = grouped ? 4 : 5;
   const pages = Math.max(1, Math.ceil(m/PAGE));
   if(page>pages) page = pages;
-  const a = (page-1)*PAGE, slice = rows.slice(a, a+PAGE);
-  document.getElementById("rows").innerHTML = slice.map(f=>`<tr>
-    <td>${esc(f.source)}</td><td><code>${esc(f.kind)}</code></td>
-    <td>${esc(f.value)}</td>
-    <td class="c-${esc(f.confidence)}">${esc(f.confidence)}</td>
-    <td class="r-${esc(f.reputation||"info")}">${esc(f.reputation||"info")}</td>
-    </tr>`).join("") ||
-    `<tr><td colspan="5" class="muted">No matching findings.</td></tr>`;
+  const a = (page-1)*PAGE, slice = items.slice(a, a+PAGE);
+  const html = grouped
+    ? slice.map(g=>`<tr>
+        <td>${esc(g.value)}</td><td><code>${esc(g.kind)}</code></td>
+        <td>${esc(g.sources.join(", "))}</td>
+        <td class="c-${esc(g.confidence)}">${esc(g.confidence)}</td>
+        </tr>`).join("")
+    : slice.map(f=>`<tr>
+        <td>${esc(f.source)}</td><td><code>${esc(f.kind)}</code></td>
+        <td>${esc(f.value)}</td>
+        <td class="c-${esc(f.confidence)}">${esc(f.confidence)}</td>
+        <td class="r-${esc(f.reputation||"info")}">${esc(f.reputation||"info")}</td>
+        </tr>`).join("");
+  document.getElementById("rows").innerHTML = html ||
+    `<tr><td colspan="${cols}" class="muted">No matching findings.</td></tr>`;
+  const label = grouped ? "groups" : "findings";
   document.getElementById("pageinfo").textContent =
-    m ? `Showing ${a+1}–${Math.min(a+PAGE,m)} of ${m}` +
-        (m!==total ? ` (filtered from ${total})` : "") + ` · page ${page}/${pages}`
-      : `0 of ${total}`;
+    m ? `Showing ${a+1}–${Math.min(a+PAGE,m)} of ${m} ${label}` +
+        (!grouped && m!==total ? ` (filtered from ${total})` : "") +
+        ` · page ${page}/${pages}`
+      : `0 ${label}`;
   document.getElementById("prev").disabled = page<=1;
   document.getElementById("next").disabled = page>=pages;
 }
@@ -292,6 +333,8 @@ try{const t=localStorage.getItem("globeye-theme");
 
 document.getElementById("filter").addEventListener("input",e=>{
   q=e.target.value; page=1; renderTable();});
+document.getElementById("grouped").addEventListener("change",e=>{
+  grouped=e.target.checked; page=1; renderTable();});
 document.getElementById("prev").onclick=()=>{page--;renderTable();};
 document.getElementById("next").onclick=()=>{page++;renderTable();};
 document.querySelectorAll("th[data-k]").forEach(th=>{
