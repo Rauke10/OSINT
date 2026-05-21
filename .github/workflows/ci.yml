@@ -21,8 +21,8 @@ jobs:
       - uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv python install 3.12
@@ -43,8 +43,8 @@ jobs:
       - uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       # Pass --python explicitly: a committed .python-version would otherwise
@@ -52,7 +52,7 @@ jobs:
       - run: uv python install ${{ matrix.python-version }}
       - run: uv sync --group dev --python ${{ matrix.python-version }}
       - run: uv run --python ${{ matrix.python-version }} pytest -n auto --cov-report=xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage-${{ matrix.python-version }}
@@ -66,8 +66,8 @@ jobs:
       - uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv python install 3.12
@@ -84,8 +84,8 @@ jobs:
       - uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -103,8 +103,8 @@ jobs:
       - uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
