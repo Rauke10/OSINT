@@ -95,6 +95,7 @@ class PassiveSource(ABC):
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
         json_body: Any | None = None,
+        data: dict[str, str] | None = None,
         expect_json: bool = True,
     ) -> JSONValue:
         """Rate-limited, cached, retried request scoped to allowed hosts."""
@@ -104,6 +105,7 @@ class PassiveSource(ABC):
             params=params,
             headers=headers,
             json_body=json_body,
+            data=data,
             cache_namespace=self.name,
             expect_json=expect_json,
         )

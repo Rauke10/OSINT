@@ -17,6 +17,9 @@ skipped gracefully; keyless sources always run.
 | `securitytrails` | Subdomains via passive DNS | domain | Yes | 50/month free | ✅ |
 | `otx` | AlienVault OTX passive DNS | domain, IP | Optional | ~5 rps | ✅ |
 | `wayback` | Historical URLs from the Internet Archive (CDX) | domain | No | polite | ✅ |
+| `urlscan` | URLs already scanned by urlscan.io (search index) | domain, IP | Optional | polite | ✅ |
+| `chaos` | Precomputed subdomain dataset (ProjectDiscovery) | domain | Yes (free) | polite | ✅ |
+| `greynoise` | IP background-noise classification (Community API) | IP | Yes (free) | polite | ✅ |
 
 ## Identity
 
@@ -26,6 +29,14 @@ skipped gracefully; keyless sources always run.
 | `hunter` | Email pattern / known emails for a domain; pivots emails | domain | Yes | plan-dependent | ✅ |
 | `dehashed` | Breach **metadata only** (no credential values stored) | email, username | Yes | plan-dependent | ✅ |
 | `gravatar` | Public profile for an email hash; pivots username | email | No | polite | ✅ |
+| `emailrep` | Aggregated reputation of an email address | email | Optional | polite | ✅ |
+
+## Threat intelligence
+
+| Source | Returns | Targets | API key | Rate limit (free) | Status |
+|---|---|---|---|---|---|
+| `urlhaus` | Malicious URLs known for a host (abuse.ch URLhaus) | domain, IP | Optional | polite | ✅ |
+| `threatfox` | Indicators of compromise (abuse.ch ThreatFox) | domain, IP, email | Optional | polite | ✅ |
 
 ## Code
 

@@ -1,0 +1,11 @@
+{
+  "email": "jane@example.com",
+  "reputation": "low",
+  "suspicious": true,
+  "references": 3,
+  "details": {
+    "credentials_leaked": true,
+    "data_breach": true,
+    "domain_exists": true
+  }
+}

@@ -28,6 +28,12 @@ SOURCE_CATALOG: dict[str, tuple[str, str]] = {
     "github": ("GitHub code search", "Public code referencing the target"),
     "pastebin": ("Pastebin (Google CSE)", "Public pastes via the Google index"),
     "username_enum": ("Social profiles", "Public-profile presence per platform"),
+    "urlscan": ("urlscan.io", "URLs already scanned by urlscan (search index)"),
+    "chaos": ("Chaos (ProjectDiscovery)", "Precomputed subdomain dataset"),
+    "greynoise": ("GreyNoise Community", "IP background-noise classification"),
+    "emailrep": ("EmailRep", "Aggregated reputation of an email address"),
+    "urlhaus": ("URLhaus (abuse.ch)", "Malicious URLs known for a host"),
+    "threatfox": ("ThreatFox (abuse.ch)", "Indicators of compromise (IoCs)"),
 }
 
 

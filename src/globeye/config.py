@@ -60,6 +60,11 @@ class Settings(BaseSettings):
     github_token: SecretStr | None = None
     google_cse_key: SecretStr | None = None
     google_cse_cx: SecretStr | None = None
+    urlscan_api_key: SecretStr | None = None
+    chaos_api_key: SecretStr | None = None
+    greynoise_api_key: SecretStr | None = None
+    emailrep_api_key: SecretStr | None = None
+    abusech_auth_key: SecretStr | None = None
 
     def secret_values(self) -> set[str]:
         """Every non-empty secret value, for log redaction."""

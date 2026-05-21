@@ -32,6 +32,7 @@ class RequestSpec(BaseModel):
     params: dict[str, Any] | None = None
     headers: dict[str, str] | None = None
     json_body: Any | None = None
+    data: dict[str, str] | None = None
     cache_namespace: str = "http"
     expect_json: bool = True
 
@@ -43,12 +44,25 @@ SENSITIVE_PARAM_KEYS = frozenset(
 )
 
 
-def cache_key_for(method: str, url: str, params: dict[str, Any] | None) -> str:
-    """Build a disk-cache key with secret query parameters stripped out."""
-    safe = sorted(
-        (k, v) for k, v in (params or {}).items() if k.lower() not in SENSITIVE_PARAM_KEYS
-    )
-    return f"{method}:{url}:{safe}"
+def _safe_items(d: dict[str, Any] | None) -> list[tuple[str, Any]]:
+    return sorted((k, v) for k, v in (d or {}).items() if k.lower() not in SENSITIVE_PARAM_KEYS)
+
+
+def cache_key_for(
+    method: str,
+    url: str,
+    params: dict[str, Any] | None,
+    *,
+    data: dict[str, str] | None = None,
+    json_body: Any | None = None,
+) -> str:
+    """Build a disk-cache key, with secret query/form parameters stripped out.
+
+    The request body is included so POST sources that hit one URL with
+    different payloads (e.g. abuse.ch) do not collide in the cache.
+    """
+    body = repr(json_body) if json_body is not None else ""
+    return f"{method}:{url}:{_safe_items(params)}:{_safe_items(data)}:{body}"
 
 
 class DisallowedHostError(RuntimeError):
@@ -124,7 +138,9 @@ async def request(
     On failure raises ``RuntimeError`` with a short, human-readable reason.
     Only 429/5xx are retried; other 4xx (401/403/...) fail fast.
     """
-    cache_key = cache_key_for(spec.method, spec.url, spec.params)
+    cache_key = cache_key_for(
+        spec.method, spec.url, spec.params, data=spec.data, json_body=spec.json_body
+    )
     if cache is not None:
         hit: JSONValue = cache.get(spec.cache_namespace, cache_key)
         if hit is not None:
@@ -139,6 +155,7 @@ async def request(
                 params=spec.params,
                 headers=spec.headers,
                 json=spec.json_body,
+                data=spec.data,
             )
             if resp.status_code == 404:
                 return None

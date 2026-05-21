@@ -22,6 +22,12 @@ def test_expected_sources_registered():
         "github",
         "pastebin",
         "username_enum",
+        "urlscan",
+        "chaos",
+        "greynoise",
+        "emailrep",
+        "urlhaus",
+        "threatfox",
     } <= names
 
 

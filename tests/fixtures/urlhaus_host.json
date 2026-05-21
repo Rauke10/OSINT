@@ -1,0 +1,12 @@
+{
+  "query_status": "ok",
+  "urlhaus_reference": "https://urlhaus.abuse.ch/host/example.com/",
+  "urls": [
+    {
+      "url": "http://example.com/bad/payload.exe",
+      "url_status": "online",
+      "threat": "malware_download",
+      "date_added": "2023-01-01 00:00:00 UTC"
+    }
+  ]
+}
