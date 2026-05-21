@@ -12,10 +12,19 @@ from typing import Any
 
 try:  # pragma: no cover - import guard
     import geoip2.database
+    import geoip2.errors
+    import maxminddb.errors
 
     _HAVE_GEOIP2 = True
 except ImportError:  # pragma: no cover
     _HAVE_GEOIP2 = False
+
+# Concrete lookup failures: address not in the DB, a corrupt DB, or a bad IP.
+_LOOKUP_ERRORS: tuple[type[Exception], ...] = (
+    (geoip2.errors.GeoIP2Error, maxminddb.errors.InvalidDatabaseError, ValueError)
+    if _HAVE_GEOIP2
+    else (ValueError,)
+)
 
 
 class GeoIPEnricher:
@@ -44,7 +53,7 @@ class GeoIPEnricher:
             return None
         try:
             r = self._city.city(ip)
-        except Exception:
+        except _LOOKUP_ERRORS:
             return None
         return {
             "country": r.country.iso_code,
@@ -59,7 +68,7 @@ class GeoIPEnricher:
             return None
         try:
             r = self._asn.asn(ip)
-        except Exception:
+        except _LOOKUP_ERRORS:
             return None
         return {
             "asn": r.autonomous_system_number,

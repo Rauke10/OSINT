@@ -40,3 +40,31 @@ def derive_pivots(findings: Iterable[Finding]) -> list[Target]:
         elif f.kind in _USERNAME_KINDS and f.value:
             _add(Target(raw=f.value, type=TargetType.USERNAME, value=f.value))
     return out
+
+
+class _PivotQueue:
+    """Breadth-first queue of targets to scan, with cycle protection.
+
+    Each target is scanned at most once. ``add`` returns ``False`` when the
+    target was already seen, so callers can record only genuine new pivots.
+    """
+
+    def __init__(self, root: Target) -> None:
+        self._seen: set[tuple[str, str]] = {(root.type.value, root.value)}
+        self._items: list[tuple[Target, int]] = [(root, 0)]
+
+    def __bool__(self) -> bool:
+        return bool(self._items)
+
+    def pop(self) -> tuple[Target, int]:
+        """Remove and return the next ``(target, depth)`` (FIFO)."""
+        return self._items.pop(0)
+
+    def add(self, target: Target, depth: int) -> bool:
+        """Enqueue ``target`` unless already seen. Returns whether it was new."""
+        key = (target.type.value, target.value)
+        if key in self._seen:
+            return False
+        self._seen.add(key)
+        self._items.append((target, depth))
+        return True

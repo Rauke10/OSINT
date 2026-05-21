@@ -6,9 +6,10 @@ import httpx
 
 from globeye.utils.http import (
     SENSITIVE_PARAM_KEYS,
+    RequestSpec,
     build_client,
     cache_key_for,
-    request_json,
+    request,
 )
 
 
@@ -27,27 +28,23 @@ def test_every_sensitive_key_is_stripped():
         assert "SECRET" not in key
 
 
-async def test_request_json_cache_ignores_api_key(settings, respx_mock, ctx):
+async def test_request_cache_ignores_api_key(settings, respx_mock, ctx):
     route = respx_mock.get("https://api.shodan.io/x").mock(
         return_value=httpx.Response(200, json={"v": 1})
     )
     client = build_client(settings, {"api.shodan.io"})
-    a = await request_json(
+    a = await request(
         client,
-        "GET",
-        "https://api.shodan.io/x",
+        RequestSpec(url="https://api.shodan.io/x", params={"key": "KEY-1"}),
         settings=settings,
         cache=ctx.cache,
-        params={"key": "KEY-1"},
     )
     # A different API key on the same URL must hit the cache, not the network.
-    b = await request_json(
+    b = await request(
         client,
-        "GET",
-        "https://api.shodan.io/x",
+        RequestSpec(url="https://api.shodan.io/x", params={"key": "KEY-2"}),
         settings=settings,
         cache=ctx.cache,
-        params={"key": "KEY-2"},
     )
     await client.aclose()
     assert a == b == {"v": 1}

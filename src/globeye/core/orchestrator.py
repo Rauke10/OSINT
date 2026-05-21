@@ -2,22 +2,21 @@
 
 Detects the target, selects applicable & available sources, runs them
 concurrently (each with its own rate limiter), deduplicates findings and —
-optionally — pivots into newly discovered entities.
+optionally — pivots into newly discovered entities. The pivot walk is
+bounded by ``Settings.scan_timeout_seconds``.
 """
 
 from __future__ import annotations
 
 import asyncio
-import ipaddress
 from datetime import UTC, datetime
 
 from globeye.config import Settings
 from globeye.core.context import ScanContext
 from globeye.core.models import Finding, ScanResult, SourceStatus, Target
-from globeye.core.pivot import derive_pivots
+from globeye.core.pivot import _PivotQueue, derive_pivots
 from globeye.core.target import detect
-from globeye.enrichment.geoip import GeoIPEnricher
-from globeye.enrichment.reputation import assess
+from globeye.enrichment.pipeline import EnrichmentPipeline
 from globeye.sources.base import PassiveSource, discover_sources
 
 
@@ -76,6 +75,35 @@ class Orchestrator:
             out.append(f)
         return out
 
+    async def _walk(
+        self,
+        queue: _PivotQueue,
+        *,
+        pivot: bool,
+        max_pivot_depth: int,
+    ) -> tuple[list[Finding], list[str], dict[str, str], list[Target]]:
+        all_findings: list[Finding] = []
+        used: list[str] = []
+        skipped: dict[str, str] = {}
+        pivoted: list[Target] = []
+
+        while queue:
+            current, depth = queue.pop()
+            findings, u, s = await self._scan_one(current)
+            all_findings.extend(findings)
+            for name in u:
+                if name not in used:
+                    used.append(name)
+            for name, reason in s.items():
+                skipped.setdefault(name, reason)
+
+            if pivot and depth < max_pivot_depth:
+                for pt in derive_pivots(findings):
+                    if queue.add(pt, depth + 1):
+                        pivoted.append(pt)
+
+        return all_findings, used, skipped, pivoted
+
     async def scan(
         self,
         raw: str | Target,
@@ -87,35 +115,13 @@ class Orchestrator:
         target = raw if isinstance(raw, Target) else detect(raw)
         started = datetime.now(UTC)
 
-        all_findings: list[Finding] = []
-        used: list[str] = []
-        skipped: dict[str, str] = {}
-        pivoted: list[Target] = []
-        seen: set[tuple[str, str]] = {(target.type.value, target.value)}
-        queue: list[tuple[Target, int]] = [(target, 0)]
-
-        while queue:
-            current, depth = queue.pop(0)
-
-            findings, u, s = await self._scan_one(current)
-            all_findings.extend(findings)
-            for name in u:
-                if name not in used:
-                    used.append(name)
-            for name, reason in s.items():
-                skipped.setdefault(name, reason)
-
-            if pivot and depth < max_pivot_depth:
-                for pt in derive_pivots(findings):
-                    pkey = (pt.type.value, pt.value)
-                    if pkey in seen:
-                        continue
-                    seen.add(pkey)
-                    pivoted.append(pt)
-                    queue.append((pt, depth + 1))
+        async with asyncio.timeout(self.settings.scan_timeout_seconds):
+            all_findings, used, skipped, pivoted = await self._walk(
+                _PivotQueue(target), pivot=pivot, max_pivot_depth=max_pivot_depth
+            )
 
         deduped = self._dedup(all_findings)
-        self._enrich(deduped)
+        EnrichmentPipeline(self.settings).run(deduped)
         return ScanResult(
             target=target,
             started_at=started,
@@ -125,33 +131,6 @@ class Orchestrator:
             findings=deduped,
             pivoted_targets=pivoted,
         )
-
-    @staticmethod
-    def _finding_ip(finding: Finding) -> str | None:
-        for candidate in (finding.target, finding.value.split(":")[0]):
-            try:
-                return str(ipaddress.ip_address(candidate))
-            except ValueError:
-                continue
-        return None
-
-    def _enrich(self, findings: list[Finding]) -> None:
-        geo = GeoIPEnricher(self.settings.geoip_city_db, self.settings.geoip_asn_db)
-        try:
-            for f in findings:
-                f.normalized_data["reputation"] = assess(f)
-                ip = self._finding_ip(f)
-                if ip is None or not geo.enabled:
-                    continue
-                geo_data: dict[str, object] = {"ip": ip}
-                if city := geo.city(ip):
-                    geo_data.update(city)
-                if asn := geo.asn(ip):
-                    geo_data["asn"] = asn
-                if len(geo_data) > 1:
-                    f.normalized_data["geo"] = geo_data
-        finally:
-            geo.close()
 
     async def health_check(self) -> list[SourceStatus]:
         """Passive health check across every registered source."""
