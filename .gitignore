@@ -38,6 +38,7 @@ cache/
 # --- Frontend (React/Vite) ---
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
 # The built SPA is emitted into the package by `npm run build` (artefact).
 src/globeye/api/static/
 

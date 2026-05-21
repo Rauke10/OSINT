@@ -135,7 +135,9 @@ curl -s -X POST localhost:8000/api/scan \
 ```
 
 `make run` serves the UI built by `make install`; if you skipped the build,
-run `make frontend` first. Full reference: [`docs/usage.md`](docs/usage.md).
+run `make frontend` first. The UI keeps your API key in `sessionStorage` by
+default — tick "remember on this device" to use `localStorage` instead.
+Full reference: [`docs/usage.md`](docs/usage.md).
 
 ## Architecture
 

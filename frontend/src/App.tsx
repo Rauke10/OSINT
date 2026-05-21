@@ -7,6 +7,7 @@ import {
   getSources,
   runScan,
 } from "./api";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Header } from "./components/Header";
 import { ScanForm } from "./components/ScanForm";
 import { SourcesPanel } from "./components/SourcesPanel";
@@ -25,6 +26,33 @@ const cardAccent: Record<string, string> = {
   low: "text-emerald-500",
 };
 
+const KEY_STORE = "globeye-key";
+const REMEMBER_STORE = "globeye-remember";
+
+/** The API key lives in sessionStorage by default; localStorage if "remember". */
+function loadStoredKey(): { key: string; remember: boolean } {
+  try {
+    const remember = localStorage.getItem(REMEMBER_STORE) === "1";
+    const store = remember ? localStorage : sessionStorage;
+    return { key: store.getItem(KEY_STORE) ?? "", remember };
+  } catch {
+    return { key: "", remember: false };
+  }
+}
+
+function persistKey(key: string, remember: boolean): void {
+  try {
+    const [keep, drop] = remember
+      ? [localStorage, sessionStorage]
+      : [sessionStorage, localStorage];
+    keep.setItem(KEY_STORE, key);
+    drop.removeItem(KEY_STORE);
+    localStorage.setItem(REMEMBER_STORE, remember ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}
+
 export function App() {
   const { t } = useI18n();
   const [theme, setTheme] = useState<Theme>(() => {
@@ -34,7 +62,8 @@ export function App() {
       return "dark";
     }
   });
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState(() => loadStoredKey().key);
+  const [rememberKey, setRememberKey] = useState(() => loadStoredKey().remember);
   const [target, setTarget] = useState("");
   const [pivot, setPivot] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,12 +83,6 @@ export function App() {
   }, [theme]);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("globeye-key");
-      if (saved) setApiKey(saved);
-    } catch {
-      /* ignore */
-    }
     getSources()
       .then(setCatalog)
       .catch(() => undefined);
@@ -67,11 +90,12 @@ export function App() {
 
   const setKey = (k: string) => {
     setApiKey(k);
-    try {
-      localStorage.setItem("globeye-key", k);
-    } catch {
-      /* ignore */
-    }
+    persistKey(k, rememberKey);
+  };
+
+  const setRemember = (remember: boolean) => {
+    setRememberKey(remember);
+    persistKey(apiKey, remember);
   };
 
   const describeError = useCallback(
@@ -181,6 +205,8 @@ export function App() {
           setTarget={setTarget}
           apiKey={apiKey}
           setApiKey={setKey}
+          remember={rememberKey}
+          setRemember={setRemember}
           pivot={pivot}
           setPivot={setPivot}
           loading={loading}
@@ -244,8 +270,12 @@ export function App() {
             </p>
 
             <SourcesPanel result={result} catalog={catalog} />
-            <RelationshipGraph result={result} />
-            <FindingsTable findings={result.findings} />
+            <ErrorBoundary label="the relationship graph">
+              <RelationshipGraph result={result} />
+            </ErrorBoundary>
+            <ErrorBoundary label="the findings table">
+              <FindingsTable findings={result.findings} />
+            </ErrorBoundary>
           </div>
         ) : (
           <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">

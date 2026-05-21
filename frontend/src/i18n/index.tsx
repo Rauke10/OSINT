@@ -28,6 +28,10 @@ const DICT: Record<string, Entry> = {
     en: "(your self-hosted GLOBEYE_API_KEY — you choose it)",
     es: "(tu GLOBEYE_API_KEY autoalojada — la eliges tú)",
   },
+  form_remember_key: {
+    en: "Remember key on this device (localStorage)",
+    es: "Recordar la clave en este dispositivo (localStorage)",
+  },
   form_pivot: { en: "pivot", es: "pivotar" },
   form_scan: { en: "Scan", es: "Escanear" },
   form_scanning: { en: "Scanning…", es: "Escaneando…" },
