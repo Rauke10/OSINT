@@ -12,12 +12,11 @@ from starlette.concurrency import run_in_threadpool
 
 from globeye.api.auth import get_engine, get_settings, require_api_key
 from globeye.config import Settings
-from globeye.core.db import get_scan, save_scan
+from globeye.core.db import get_scan
 from globeye.core.models import ScanResult
-from globeye.core.orchestrator import Orchestrator
 from globeye.core.target import TargetDetectionError, detect
 from globeye.report.html_writer import to_html
-from globeye.report.json_writer import to_dict
+from globeye.services.scan_service import run_legacy_scan
 
 router = APIRouter(tags=["scan"], dependencies=[Depends(require_api_key)])
 
@@ -41,11 +40,7 @@ async def run_scan(
             detail=f"invalid target: {exc}",
         ) from exc
 
-    result = await Orchestrator(settings).scan(target, pivot=body.pivot)
-    scan_id = await run_in_threadpool(save_scan, engine, result)
-    payload = to_dict(result)
-    payload["scan_id"] = scan_id
-    return payload
+    return await run_legacy_scan(engine, settings, target, pivot=body.pivot)
 
 
 @router.get("/api/scan/{scan_id}/report", response_class=HTMLResponse)

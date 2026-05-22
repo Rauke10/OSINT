@@ -1,0 +1,15 @@
+{
+  "data": {
+    "type": "ip_address",
+    "id": "192.0.2.10",
+    "attributes": {
+      "last_analysis_stats": {
+        "malicious": 2,
+        "suspicious": 0,
+        "harmless": 60,
+        "undetected": 5
+      },
+      "hostnames": ["mail.example.com", "www.example.com"]
+    }
+  }
+}

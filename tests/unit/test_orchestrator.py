@@ -68,7 +68,7 @@ async def test_scan_dedup_and_no_pivot(settings):
 
     assert [f.value for f in result.findings] == ["found@example.com"]
     assert "fake" in result.sources_used
-    assert result.sources_skipped.get("keyed") == "missing API key"
+    assert result.sources_skipped.get("keyed") == "missing API key — configure in .env"
     assert result.pivoted_targets == []
     assert result.duration_seconds >= 0
 

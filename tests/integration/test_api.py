@@ -65,6 +65,46 @@ async def test_sources_catalogue(client):
     # A keyed source with no key configured reports itself unavailable.
     assert by_name["shodan"]["requires_api_key"] is True
     assert by_name["shodan"]["available"] is False
+    assert by_name["shodan"]["configured"] is False
+    assert by_name["crtsh"]["configured"] is True
+
+
+async def test_sources_status_no_secrets(client):
+    r = await client.get("/api/sources/status")
+    assert r.status_code == 200
+    data = r.json()
+    assert any(row["name"] == "crtsh" for row in data)
+    crtsh = next(row for row in data if row["name"] == "crtsh")
+    assert crtsh["status"] == "keyless"
+    assert crtsh["configured"] is True
+    assert "api_key" not in {k for row in data for k in row}
+    assert all("shodan_api_key" not in str(row) for row in data)
+
+
+async def test_sources_status_check_mocked(client, respx_mock, load_fixture):
+    respx_mock.get("https://crt.sh/").mock(
+        return_value=httpx.Response(200, json=load_fixture("crtsh_example_com.json"))
+    )
+    respx_mock.get("https://web.archive.org/cdx/search/cdx").mock(
+        return_value=httpx.Response(200, json=[["urlkey"], ["http://example.com/"]])
+    )
+    respx_mock.get("https://rdap.org/domain/example.com").mock(
+        return_value=httpx.Response(
+            302,
+            headers={"Location": "https://rdap.verisign.com/domain/example.com"},
+        )
+    )
+    respx_mock.get("https://rdap.verisign.com/domain/example.com").mock(
+        return_value=httpx.Response(200, json={"ldhName": "example.com", "entities": []})
+    )
+    r = await client.get("/api/sources/status", params={"check": "true"})
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data) > 5
+    crtsh = next(row for row in data if row["name"] == "crtsh")
+    assert crtsh["status"] == "ok"
+    rdap = next(row for row in data if row["name"] == "rdap")
+    assert rdap["credential_status"] == "valid"
 
 
 async def test_scan_requires_api_key(client):

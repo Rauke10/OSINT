@@ -13,9 +13,19 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import respx
 
 from globeye.config import Settings
 from globeye.core.context import ScanContext
+
+
+@pytest.fixture(autouse=True)
+def _respx_clean_routes(respx_mock):
+    """Avoid cross-test HTTP mock leakage (e.g. Shodan probe routes)."""
+    respx_mock.routes.clear()
+    respx.routes.clear()
+    return
+
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

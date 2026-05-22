@@ -1,0 +1,18 @@
+{
+  "data": {
+    "type": "domain",
+    "id": "example.com",
+    "attributes": {
+      "last_analysis_stats": {
+        "malicious": 0,
+        "suspicious": 1,
+        "harmless": 70,
+        "undetected": 3
+      },
+      "last_dns_records": [
+        { "type": "A", "value": "93.184.216.34", "ttl": 300 },
+        { "type": "CNAME", "value": "cdn.example.com.", "ttl": 60 }
+      ]
+    }
+  }
+}

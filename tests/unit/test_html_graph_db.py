@@ -114,7 +114,7 @@ def test_report_documents_sources_used_and_skipped():
         started_at=now,
         finished_at=now,
         sources_used=["crtsh"],
-        sources_skipped={"shodan": "missing API key", "rdap": "error: timeout"},
+        sources_skipped={"shodan": "missing API key", "rdap": "network timeout"},
         findings=[
             Finding(
                 source="crtsh",
@@ -133,7 +133,7 @@ def test_report_documents_sources_used_and_skipped():
     assert "Have I Been Pwned" in html or "Shodan" in html
     # Skip reasons are carried through so the report is unambiguous.
     assert "missing API key" in html
-    assert "error: timeout" in html
+    assert "network timeout" in html
     # Provenance data embedded for client-side rendering.
     assert 'id="sourcesdata"' in html
 

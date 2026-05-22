@@ -114,6 +114,19 @@ class SourceStatus(BaseModel):
     detail: str | None = None
 
 
+class SourceRun(BaseModel):
+    """Per-source outcome for traceability (Fase 2A)."""
+
+    name: str
+    status: str
+    findings_count: int = 0
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    latency_ms: int | None = None
+    message: str | None = None
+    error_type: str | None = None
+
+
 class ScanResult(BaseModel):
     """The full outcome of a scan."""
 
@@ -124,6 +137,8 @@ class ScanResult(BaseModel):
     sources_skipped: dict[str, str] = Field(default_factory=dict)
     findings: list[Finding]
     pivoted_targets: list[Target] = Field(default_factory=list)
+    source_runs: list[SourceRun] = Field(default_factory=list)
+    routing: dict[str, Any] | None = None
 
     @property
     def duration_seconds(self) -> float:

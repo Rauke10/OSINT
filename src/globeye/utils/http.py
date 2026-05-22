@@ -56,7 +56,7 @@ def build_client(
     return httpx.AsyncClient(
         timeout=settings.http_timeout_seconds,
         headers={"User-Agent": settings.user_agent, "Accept-Encoding": "gzip"},
-        proxy=settings.proxy_url,
+        proxy=settings.proxy_url or None,
         follow_redirects=True,
         event_hooks={"request": [_guard]},
     )
@@ -115,4 +115,4 @@ async def request_json(
                 break
             await asyncio.sleep(2.0**attempt)
 
-    raise RuntimeError(f"request to {url} failed after retries: {last_exc}")
+    raise RuntimeError(f"request to {url} failed after retries: {last_exc}") from last_exc

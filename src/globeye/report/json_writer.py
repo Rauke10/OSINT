@@ -11,7 +11,7 @@ from globeye.core.models import ScanResult
 
 def to_dict(result: ScanResult) -> dict[str, Any]:
     """Serialize a scan result, with a small summary block on top."""
-    return {
+    out: dict[str, Any] = {
         "target": result.target.model_dump(mode="json"),
         "summary": {
             "duration_seconds": round(result.duration_seconds, 3),
@@ -22,6 +22,9 @@ def to_dict(result: ScanResult) -> dict[str, Any]:
         },
         "findings": [f.model_dump(mode="json") for f in result.findings],
     }
+    if result.routing is not None:
+        out["routing"] = result.routing
+    return out
 
 
 def to_json(result: ScanResult, *, indent: int = 2) -> str:

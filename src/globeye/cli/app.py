@@ -9,14 +9,19 @@ from typing import Annotated
 import typer
 from rich.console import Console
 from rich.table import Table
+from sqlmodel import Session
 
 from globeye import __version__
 from globeye.config import get_settings
+from globeye.core.db import make_engine
 from globeye.core.models import ScanResult
 from globeye.core.orchestrator import Orchestrator
 from globeye.core.target import TargetDetectionError, detect
+from globeye.db.models import Case
 from globeye.report.html_writer import write_html
 from globeye.report.json_writer import write_json
+from globeye.services.scan_service import run_cli_case_scan
+from globeye.services.source_status import describe_source_status
 
 app = typer.Typer(
     add_completion=False,
@@ -26,6 +31,18 @@ app = typer.Typer(
 console = Console()
 
 _CONF_STYLE = {"high": "red", "medium": "yellow", "low": "cyan"}
+
+_STATUS_STYLE = {
+    "ok": "green",
+    "keyless": "green",
+    "missing_key": "yellow",
+    "invalid_key": "red",
+    "rate_limited": "yellow",
+    "network_error": "red",
+    "config_error": "red",
+    "unknown": "red",
+    "not_applicable": "dim",
+}
 
 
 def _render(result: ScanResult) -> None:
@@ -66,6 +83,14 @@ def scan(
         Path | None, typer.Option("--html", help="write interactive HTML report")
     ] = None,
     pivot: Annotated[bool, typer.Option("--pivot", help="pivot into discovered entities")] = False,
+    depth: Annotated[
+        str,
+        typer.Option("--depth", help="quick | standard | deep (case scans only)"),
+    ] = "standard",
+    case_id: Annotated[
+        int | None,
+        typer.Option("--case-id", help="associate scan with an investigation case"),
+    ] = None,
     no_cache: Annotated[bool, typer.Option("--no-cache", help="bypass the disk cache")] = False,
     proxy: Annotated[str | None, typer.Option("--proxy", help="SOCKS5/HTTP proxy URL")] = None,
 ) -> None:
@@ -86,7 +111,25 @@ def scan(
         raise typer.Exit(2) from exc
 
     try:
-        result = asyncio.run(Orchestrator(settings).scan(tgt, pivot=pivot))
+        if case_id is not None:
+            engine = make_engine(settings.db_url)
+            with Session(engine) as session:
+                if session.get(Case, case_id) is None:
+                    console.print(f"[red]case not found:[/] {case_id}")
+                    raise typer.Exit(2)
+            result = asyncio.run(
+                run_cli_case_scan(
+                    engine,
+                    settings,
+                    case_id=case_id,
+                    target=tgt,
+                    pivot=pivot,
+                    depth=depth,
+                )
+            )
+            console.print(f"[dim]case:[/] {case_id}")
+        else:
+            result = asyncio.run(Orchestrator(settings).scan(tgt, pivot=pivot))
     except Exception as exc:
         console.print(f"[red]scan failed:[/] {exc}")
         raise typer.Exit(1) from exc
@@ -102,24 +145,35 @@ def scan(
 
 @app.command()
 def sources(
-    health: Annotated[bool, typer.Option("--health", help="run passive health checks")] = False,
+    check: Annotated[
+        bool,
+        typer.Option("--check", help="light probe per source (uses a small amount of API quota)"),
+    ] = False,
+    health: Annotated[
+        bool,
+        typer.Option("--health", help="alias for --check (deprecated)", hidden=True),
+    ] = False,
 ) -> None:
-    """List registered passive sources (optionally with health)."""
-    orch = Orchestrator(get_settings())
-    table = Table(title="Passive sources")
-    table.add_column("name", style="magenta")
-    table.add_column("targets")
-    table.add_column("API key")
-    table.add_column("available" if health else "")
-    statuses = asyncio.run(orch.health_check()) if health else []
-    by_name = {s.name: s for s in statuses}
-    for cls in orch.source_classes:
-        st = by_name.get(cls.name)
+    """List passive sources and their configuration status."""
+    probe = check or health
+    settings = get_settings()
+    rows = asyncio.run(describe_source_status(settings, probe=probe))
+    table = Table(title="Passive sources" + (" (checked)" if probe else ""))
+    table.add_column("source", style="magenta")
+    table.add_column("configured")
+    table.add_column("status")
+    table.add_column("message")
+    for row in rows:
+        status = str(row["status"])
+        style = _STATUS_STYLE.get(status, "white")
+        configured = "yes" if row["configured"] else "no"
+        if not row["requires_api_key"]:
+            configured = "n/a"
         table.add_row(
-            cls.name,
-            ",".join(sorted(t.value for t in cls.supported_target_types)),
-            "required" if cls.requires_api_key else "no",
-            ("[green]yes[/]" if st and st.available else "[red]no[/]") if health else "",
+            row["name"],
+            configured,
+            f"[{style}]{status}[/]",
+            str(row["message"]),
         )
     console.print(table)
 

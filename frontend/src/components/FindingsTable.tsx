@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { QualityBadge } from "./QualityBadge";
 import { useI18n } from "../i18n";
 import type { Confidence, Finding } from "../types";
 
@@ -14,16 +15,31 @@ export function FindingsTable({ findings }: { findings: Finding[] }) {
   const { t } = useI18n();
   const [filter, setFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [hideFp, setHideFp] = useState(false);
 
   const matched = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    if (!q) return findings;
-    return findings.filter((f) =>
+    let rows = findings;
+    if (hideFp) {
+      rows = rows.filter((f) => !f.normalized_data?.quality?.is_potential_false_positive);
+    }
+    if (!q) return rows;
+    return rows.filter((f) =>
       `${f.source} ${f.kind} ${f.value} ${f.confidence}`
         .toLowerCase()
         .includes(q),
     );
-  }, [findings, filter]);
+  }, [findings, filter, hideFp]);
+
+  const waybackNote = useMemo(() => {
+    const summary = findings.find((f) => f.kind === "wayback_summary");
+    if (!summary) return null;
+    const total = summary.normalized_data?.total_urls as number | undefined;
+    if (total && total > 50) {
+      return t("wayback_summary_note").replace("{n}", String(total));
+    }
+    return null;
+  }, [findings, t]);
 
   const pages = Math.max(1, Math.ceil(matched.length / PAGE));
   const current = Math.min(page, pages);
@@ -31,8 +47,15 @@ export function FindingsTable({ findings }: { findings: Finding[] }) {
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      {waybackNote ? (
+        <p className="mb-2 text-sm text-violet-700 dark:text-violet-300">{waybackNote}</p>
+      ) : null}
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-semibold">{t("findings_title")}</h2>
+        <label className="flex items-center gap-2 text-xs text-slate-500">
+          <input type="checkbox" checked={hideFp} onChange={(e) => setHideFp(e.target.checked)} />
+          {t("quality_filter_hide_fp")}
+        </label>
         <input
           type="search"
           value={filter}
@@ -51,6 +74,7 @@ export function FindingsTable({ findings }: { findings: Finding[] }) {
               <th className="py-1.5 pr-3">{t("col_source")}</th>
               <th className="pr-3">{t("col_kind")}</th>
               <th className="pr-3">{t("col_value")}</th>
+              <th className="pr-3">{t("quality_col")}</th>
               <th>{t("col_conf")}</th>
             </tr>
           </thead>
@@ -64,13 +88,25 @@ export function FindingsTable({ findings }: { findings: Finding[] }) {
                 <td className="pr-3">
                   <code>{f.kind}</code>
                 </td>
-                <td className="break-all pr-3">{f.value}</td>
+                <td className="break-all pr-3">
+                  {f.kind === "wayback_summary" ? (
+                    <span className="text-violet-600 dark:text-violet-400">{f.value}</span>
+                  ) : (
+                    f.value
+                  )}
+                </td>
+                <td className="pr-3">
+                  <QualityBadge
+                    label={f.normalized_data?.quality?.quality_label}
+                    reason={f.normalized_data?.quality?.quality_reason}
+                  />
+                </td>
                 <td className={confClass[f.confidence]}>{f.confidence}</td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-3 text-slate-500">
+                <td colSpan={5} className="py-3 text-slate-500">
                   {t("no_findings")}
                 </td>
               </tr>

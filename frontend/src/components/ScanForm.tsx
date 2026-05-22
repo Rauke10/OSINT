@@ -3,13 +3,12 @@ import { useI18n } from "../i18n";
 interface Props {
   target: string;
   setTarget: (v: string) => void;
-  apiKey: string;
-  setApiKey: (v: string) => void;
   pivot: boolean;
   setPivot: (v: boolean) => void;
   loading: boolean;
   error: string;
   onScan: () => void;
+  scanLabel?: string;
 }
 
 const inputCls =
@@ -20,13 +19,12 @@ const inputCls =
 export function ScanForm({
   target,
   setTarget,
-  apiKey,
-  setApiKey,
   pivot,
   setPivot,
   loading,
   error,
   onScan,
+  scanLabel,
 }: Props) {
   const { t } = useI18n();
 
@@ -42,24 +40,12 @@ export function ScanForm({
               type="text"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && onScan()}
+              onKeyDown={(e) => e.key === "Enter" && !loading && onScan()}
               placeholder={t("form_target_ph")}
               className={inputCls}
             />
           </label>
-          <label className="block">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              {t("form_key")}{" "}
-              <span className="text-slate-400">{t("form_key_hint")}</span>
-            </span>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="X-API-Key"
-              className={inputCls}
-            />
-          </label>
+          <p className="text-xs text-slate-400 dark:text-slate-500">{t("form_pivot_hint")}</p>
         </div>
         <div className="flex gap-3 md:flex-col md:justify-end">
           <label className="flex select-none items-center gap-2 text-sm">
@@ -76,13 +62,13 @@ export function ScanForm({
             disabled={loading}
             className="rounded-lg bg-sky-600 px-6 py-2 font-medium text-white hover:bg-sky-500 disabled:cursor-default disabled:opacity-50"
           >
-            {loading ? t("form_scanning") : t("form_scan")}
+            {loading ? t("form_scanning") : (scanLabel ?? t("form_scan"))}
           </button>
         </div>
       </div>
-      {error && (
+      {error ? (
         <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
-      )}
+      ) : null}
     </section>
   );
 }

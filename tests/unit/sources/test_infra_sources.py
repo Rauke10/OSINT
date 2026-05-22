@@ -5,11 +5,13 @@ from __future__ import annotations
 import httpx
 
 from globeye.core.target import detect
+from globeye.sources.infra.abuseipdb import AbuseIpdbSource
 from globeye.sources.infra.censys import CensysSource
 from globeye.sources.infra.otx import OtxSource
 from globeye.sources.infra.rdap import RdapSource
 from globeye.sources.infra.securitytrails import SecurityTrailsSource
 from globeye.sources.infra.shodan import ShodanSource
+from globeye.sources.infra.virustotal import VirusTotalSource
 from globeye.sources.infra.wayback import WaybackSource
 
 
@@ -118,9 +120,59 @@ async def test_wayback(ctx, load_fixture, respx_mock):
     src = WaybackSource(ctx)
     findings = await src.fetch(detect("example.com"))
     await src.aclose()
-    urls = {f.value for f in findings}
+    kinds = {f.kind for f in findings}
+    assert "wayback_summary" in kinds
+    urls = {f.value for f in findings if f.kind == "archived_url"}
     assert urls == {
         "http://example.com/",
         "http://example.com/login",
         "http://example.com/admin",
     }
+
+
+async def test_abuseipdb_requires_key(ctx):
+    src = AbuseIpdbSource(ctx)
+    assert src.available() is False
+    assert await src.fetch(detect("192.0.2.10")) == []
+    await src.aclose()
+
+
+async def test_abuseipdb_check(ctx_factory, load_fixture, respx_mock):
+    ctx = ctx_factory(abuseipdb_api_key="ABUSE-KEY")
+    respx_mock.get("https://api.abuseipdb.com/api/v2/check").mock(
+        return_value=httpx.Response(200, json=load_fixture("abuseipdb_check.json"))
+    )
+    src = AbuseIpdbSource(ctx)
+    findings = await src.fetch(detect("192.0.2.10"))
+    await src.aclose()
+    assert len(findings) == 1
+    assert findings[0].kind == "ip_reputation"
+    assert "42" in findings[0].value
+    assert ctx.recorder.hosts == {"api.abuseipdb.com"}
+
+
+async def test_virustotal_domain(ctx_factory, load_fixture, respx_mock):
+    ctx = ctx_factory(virustotal_api_key="VT-KEY")
+    respx_mock.get("https://www.virustotal.com/api/v3/domains/example.com").mock(
+        return_value=httpx.Response(200, json=load_fixture("virustotal_domain_example_com.json"))
+    )
+    src = VirusTotalSource(ctx)
+    findings = await src.fetch(detect("example.com"))
+    await src.aclose()
+    kinds = {f.kind for f in findings}
+    assert "analysis_stats" in kinds
+    assert "resolution" in kinds
+    assert "cname" in kinds
+    assert ctx.recorder.hosts == {"www.virustotal.com"}
+
+
+async def test_virustotal_ip(ctx_factory, load_fixture, respx_mock):
+    ctx = ctx_factory(virustotal_api_key="VT-KEY")
+    respx_mock.get("https://www.virustotal.com/api/v3/ip_addresses/192.0.2.10").mock(
+        return_value=httpx.Response(200, json=load_fixture("virustotal_ip.json"))
+    )
+    src = VirusTotalSource(ctx)
+    findings = await src.fetch(detect("192.0.2.10"))
+    await src.aclose()
+    assert {f.kind for f in findings} >= {"analysis_stats", "hostname"}
+    assert "mail.example.com" in {f.value for f in findings}

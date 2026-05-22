@@ -13,6 +13,17 @@ from typing import Any
 
 MASK = "****"
 
+
+def mask_secret(value: str, *, tail: int = 4) -> str:
+    """Return a display-safe hint for a secret (never log the full value)."""
+    stripped = value.strip()
+    if not stripped:
+        return MASK
+    if len(stripped) <= tail:
+        return MASK
+    return f"{MASK}{stripped[-tail:]}"
+
+
 # Generic high-signal secret shapes (defence in depth on top of exact values).
 _PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?i)\b(?:api[_-]?key|token|secret|authorization|bearer)\b\s*[=:]\s*\S+"),
@@ -39,7 +50,7 @@ class Redactor:
             return self._scrub_str(value)
         if isinstance(value, MutableMapping):
             return {k: self.scrub(v) for k, v in value.items()}
-        if isinstance(value, (list, tuple, set)):
+        if isinstance(value, list | tuple | set):
             return type(value)(self.scrub(v) for v in value)
         return value
 

@@ -1,0 +1,14 @@
+{
+  "data": {
+    "ipAddress": "192.0.2.10",
+    "abuseConfidenceScore": 42,
+    "countryCode": "US",
+    "usageType": "Fixed Line ISP",
+    "isp": "Example ISP",
+    "domain": "example.net",
+    "totalReports": 3,
+    "numDistinctUsers": 2,
+    "lastReportedAt": "2026-01-15T12:00:00+00:00",
+    "isWhitelisted": false
+  }
+}

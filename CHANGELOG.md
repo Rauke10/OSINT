@@ -8,6 +8,11 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Phase 1 — investigations by case:** `Case`, `CaseTarget`, `Entity`,
+  `EntityRelationship`, `ScanJob` (SQLModel); REST API for cases, scans,
+  jobs, entities, relationships, and `GET /api/cases/{id}/graph`; entity
+  normalization from findings; React routes (`/dashboard`, `/cases`, …);
+  legacy quick scan at `/scan`; CLI `--case-id`.
 - **React + TypeScript web UI** (`frontend/`, Vite + Tailwind v4): a
   professional single-page interface — scan form, summary cards,
   "Sources consulted" panel, interactive cytoscape relationship graph,

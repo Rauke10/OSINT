@@ -13,11 +13,16 @@ from datetime import UTC, datetime
 
 from globeye.config import Settings
 from globeye.core.context import ScanContext
-from globeye.core.models import Finding, ScanResult, SourceStatus, Target
+from globeye.core.models import Finding, ScanResult, SourceRun, SourceStatus, Target
 from globeye.core.pivot import derive_pivots
 from globeye.core.target import detect
 from globeye.enrichment.geoip import GeoIPEnricher
 from globeye.enrichment.reputation import assess
+from globeye.services.source_errors import (
+    error_type_from_reason,
+    format_source_error,
+    skip_reason_to_status,
+)
 from globeye.sources.base import PassiveSource, discover_sources
 
 
@@ -36,33 +41,86 @@ class Orchestrator:
     def _sources(self) -> list[PassiveSource]:
         return [cls(self.ctx) for cls in self._source_classes]
 
-    async def _scan_one(self, target: Target) -> tuple[list[Finding], list[str], dict[str, str]]:
+    async def _scan_one(
+        self,
+        target: Target,
+        *,
+        source_names: frozenset[str] | None = None,
+    ) -> tuple[list[Finding], list[str], dict[str, str], list[SourceRun]]:
         used: list[str] = []
         skipped: dict[str, str] = {}
+        runs: list[SourceRun] = []
         runnable: list[PassiveSource] = []
         for src in self._sources():
+            if source_names is not None and src.name not in source_names:
+                continue
             if not src.applicable(target):
                 continue
             if not src.available():
-                skipped[src.name] = "missing API key"
+                reason = "missing API key — configure in .env"
+                skipped[src.name] = reason
+                now = datetime.now(UTC)
+                runs.append(
+                    SourceRun(
+                        name=src.name,
+                        status="missing_key",
+                        message=reason,
+                        started_at=now,
+                        finished_at=now,
+                        latency_ms=0,
+                        error_type="missing_key",
+                    )
+                )
                 continue
             runnable.append(src)
 
-        async def _run(src: PassiveSource) -> list[Finding]:
+        async def _run(
+            src: PassiveSource,
+        ) -> tuple[PassiveSource, list[Finding] | BaseException, datetime, datetime]:
+            started = datetime.now(UTC)
             try:
-                return await src.fetch(target)
+                findings = await src.fetch(target)
+                return src, findings, started, datetime.now(UTC)
+            except BaseException as exc:
+                return src, exc, started, datetime.now(UTC)
             finally:
                 await src.aclose()
 
-        results = await asyncio.gather(*(_run(s) for s in runnable), return_exceptions=True)
+        results = await asyncio.gather(*(_run(s) for s in runnable))
         findings: list[Finding] = []
-        for src, res in zip(runnable, results, strict=True):
+        for src, res, started, finished in results:
+            latency = int((finished - started).total_seconds() * 1000)
             if isinstance(res, BaseException):
-                skipped[src.name] = f"error: {type(res).__name__}: {res}"
+                reason = format_source_error(res)
+                skipped[src.name] = reason
+                runs.append(
+                    SourceRun(
+                        name=src.name,
+                        status=skip_reason_to_status(reason),
+                        findings_count=0,
+                        started_at=started,
+                        finished_at=finished,
+                        latency_ms=latency,
+                        message=reason,
+                        error_type=error_type_from_reason(reason),
+                    )
+                )
                 continue
+            count = len(res)
             used.append(src.name)
             findings.extend(res)
-        return findings, used, skipped
+            runs.append(
+                SourceRun(
+                    name=src.name,
+                    status="used" if count else "no_results",
+                    findings_count=count,
+                    started_at=started,
+                    finished_at=finished,
+                    latency_ms=latency,
+                    message=None if count else "Queried successfully, no findings",
+                )
+            )
+        return findings, used, skipped, runs
 
     @staticmethod
     def _dedup(findings: list[Finding]) -> list[Finding]:
@@ -82,12 +140,14 @@ class Orchestrator:
         *,
         pivot: bool = False,
         max_pivot_depth: int = 1,
+        source_names: frozenset[str] | None = None,
     ) -> ScanResult:
         """Run a full (optionally pivoting) passive scan."""
         target = raw if isinstance(raw, Target) else detect(raw)
         started = datetime.now(UTC)
 
         all_findings: list[Finding] = []
+        all_runs: list[SourceRun] = []
         used: list[str] = []
         skipped: dict[str, str] = {}
         pivoted: list[Target] = []
@@ -97,8 +157,9 @@ class Orchestrator:
         while queue:
             current, depth = queue.pop(0)
 
-            findings, u, s = await self._scan_one(current)
+            findings, u, s, runs = await self._scan_one(current, source_names=source_names)
             all_findings.extend(findings)
+            all_runs.extend(runs)
             for name in u:
                 if name not in used:
                     used.append(name)
@@ -124,6 +185,7 @@ class Orchestrator:
             sources_skipped=skipped,
             findings=deduped,
             pivoted_targets=pivoted,
+            source_runs=all_runs,
         )
 
     @staticmethod

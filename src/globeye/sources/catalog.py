@@ -10,6 +10,7 @@ from typing import Any
 
 from globeye.config import Settings
 from globeye.core.context import ScanContext
+from globeye.services.source_credentials import is_configured
 from globeye.sources.base import discover_sources
 
 # name -> (display label, what it indexes)
@@ -28,6 +29,8 @@ SOURCE_CATALOG: dict[str, tuple[str, str]] = {
     "github": ("GitHub code search", "Public code referencing the target"),
     "pastebin": ("Pastebin (Google CSE)", "Public pastes via the Google index"),
     "username_enum": ("Social profiles", "Public-profile presence per platform"),
+    "abuseipdb": ("AbuseIPDB", "IP abuse confidence score and reports"),
+    "virustotal": ("VirusTotal", "Passive DNS, hostnames and analysis stats"),
 }
 
 
@@ -48,6 +51,9 @@ def describe_sources(settings: Settings) -> list[dict[str, Any]]:
                 "label": label,
                 "description": desc,
                 "requires_api_key": cls.requires_api_key,
+                "configured": is_configured(
+                    settings, cls.name, requires_api_key=cls.requires_api_key
+                ),
                 "available": cls(ctx).available(),
                 "targets": sorted(t.value for t in cls.supported_target_types),
             }

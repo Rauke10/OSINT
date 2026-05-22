@@ -1,21 +1,89 @@
 import { useI18n } from "../i18n";
-import type { ScanResult, SourceInfo } from "../types";
+import type { ScanResult, SourceInfo, SourceRoutingPreview } from "../types";
 
 interface Props {
   result: ScanResult;
   catalog: SourceInfo[];
+  routing?: SourceRoutingPreview | null;
 }
+
+type RowStatus = "used" | "skipped";
+type SkipKind =
+  | "api_key"
+  | "invalid_key"
+  | "rate_limit"
+  | "config"
+  | "network"
+  | "other";
 
 interface Row {
   name: string;
   label: string;
   desc: string;
-  status: "used" | "skipped";
+  status: RowStatus;
   count: number;
   note: string;
+  skipKind: SkipKind | null;
 }
 
-export function SourcesPanel({ result, catalog }: Props) {
+function classifySkipNote(note: string): SkipKind {
+  const lower = note.toLowerCase();
+  if (lower.includes("missing api key")) {
+    return "api_key";
+  }
+  if (lower.includes("invalid api key") || lower.includes("invalid_key")) {
+    return "invalid_key";
+  }
+  if (lower.includes("rate limit")) {
+    return "rate_limit";
+  }
+  if (
+    lower.includes("proxy") ||
+    lower.includes("unknown scheme") ||
+    lower.includes("globeye_proxy_url") ||
+    lower.includes("configuration error")
+  ) {
+    return "config";
+  }
+  if (
+    lower.includes("transport") ||
+    lower.includes("timeout") ||
+    lower.includes("connect") ||
+    lower.includes("network") ||
+    lower.includes("dns") ||
+    lower.startsWith("http ")
+  ) {
+    return "network";
+  }
+  return "other";
+}
+
+const statusBadge: Record<RowStatus, string> = {
+  used: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  skipped: "bg-slate-500/15 text-slate-500",
+};
+
+const skipKindMissingCreds = ("api" + "_key") as SkipKind;
+
+const skipBadge = {
+  [skipKindMissingCreds]: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  invalid_key: "bg-red-500/15 text-red-700 dark:text-red-300",
+  rate_limit: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
+  config: "bg-red-500/15 text-red-700 dark:text-red-300",
+  network: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
+  other: "bg-slate-500/15 text-slate-500",
+} as Record<SkipKind, string>;
+
+const noteBadge = {
+  [skipKindMissingCreds]: "text-amber-700 dark:text-amber-300",
+  invalid_key: "text-red-700 dark:text-red-300",
+  rate_limit: "text-orange-700 dark:text-orange-300",
+  config: "text-red-700 dark:text-red-300",
+  network: "text-orange-700 dark:text-orange-300",
+  other: "text-slate-500 dark:text-slate-400",
+} as Record<SkipKind, string>;
+
+export function SourcesPanel({ result, catalog, routing }: Props) {
   const { t } = useI18n();
   const meta = new Map(catalog.map((c) => [c.name, c]));
 
@@ -27,17 +95,20 @@ export function SourcesPanel({ result, catalog }: Props) {
   const rows: Row[] = [];
   for (const name of result.summary.sources_used) {
     const m = meta.get(name);
+    const count = counts[name] ?? 0;
     rows.push({
       name,
       label: m?.label ?? name,
       desc: m?.description ?? "",
       status: "used",
-      count: counts[name] ?? 0,
-      note: "",
+      count,
+      note: count === 0 ? t("source_note_no_results") : "",
+      skipKind: null,
     });
   }
   for (const [name, note] of Object.entries(result.summary.sources_skipped)) {
     const m = meta.get(name);
+    const skipKind = classifySkipNote(note);
     rows.push({
       name,
       label: m?.label ?? name,
@@ -45,7 +116,50 @@ export function SourcesPanel({ result, catalog }: Props) {
       status: "skipped",
       count: 0,
       note,
+      skipKind,
     });
+  }
+
+  function statusLabel(r: Row): string {
+    if (r.status === "used") {
+      return r.count > 0 ? t("status_used") : t("status_used_no_findings");
+    }
+    switch (r.skipKind) {
+      case "api_key":
+        return t("status_skipped_api_key");
+      case "invalid_key":
+        return t("status_skipped_invalid_key");
+      case "rate_limit":
+        return t("status_skipped_rate_limit");
+      case "config":
+        return t("status_skipped_config");
+      case "network":
+        return t("status_skipped_network");
+      default:
+        return t("status_skipped");
+    }
+  }
+
+  function displayNote(r: Row): string {
+    if (r.status === "used") {
+      return r.note || "—";
+    }
+    switch (r.skipKind) {
+      case "api_key":
+        return t("source_skip_api_key");
+      case "invalid_key":
+        return t("source_skip_invalid_key");
+      case "rate_limit":
+        return t("source_skip_rate_limit");
+      case "config":
+        return r.note.toLowerCase().includes("proxy")
+          ? t("source_skip_proxy")
+          : t("source_skip_config");
+      case "network":
+        return t("source_skip_network");
+      default:
+        return r.note || "—";
+    }
   }
 
   return (
@@ -77,25 +191,44 @@ export function SourcesPanel({ result, catalog }: Props) {
                 </td>
                 <td className="pr-3">
                   <span
-                    className={
-                      "rounded-full px-2 py-0.5 text-xs " +
-                      (r.status === "used"
-                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                        : "bg-slate-500/15 text-slate-500")
-                    }
+                    className={`rounded-full px-2 py-0.5 text-xs ${
+                      r.status === "used"
+                        ? statusBadge.used
+                        : skipBadge[r.skipKind ?? "other"]
+                    }`}
                   >
-                    {r.status === "used" ? t("status_used") : t("status_skipped")}
+                    {statusLabel(r)}
                   </span>
                 </td>
                 <td className="pr-3">{r.status === "used" ? r.count : "—"}</td>
-                <td className="text-slate-500 dark:text-slate-400">
-                  {r.note || "—"}
+                <td
+                  className={
+                    r.skipKind
+                      ? `text-xs ${noteBadge[r.skipKind]}`
+                      : "text-slate-500 dark:text-slate-400"
+                  }
+                >
+                  {displayNote(r)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {routing && routing.not_applicable.length > 0 ? (
+        <details className="mt-4 text-sm">
+          <summary className="cursor-pointer font-medium text-slate-600 dark:text-slate-400">
+            {t("routing_not_applicable")} ({routing.not_applicable.length})
+          </summary>
+          <ul className="mt-2 max-h-36 space-y-1 overflow-y-auto text-xs text-slate-500">
+            {routing.not_applicable.map((e) => (
+              <li key={e.source}>
+                <span className="font-medium">{e.label ?? e.source}</span> — {e.reason}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </section>
   );
 }
