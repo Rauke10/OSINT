@@ -22,7 +22,7 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv python install 3.12
@@ -44,7 +44,7 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       # Pass --python explicitly: a committed .python-version would otherwise
@@ -67,7 +67,7 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv python install 3.12
